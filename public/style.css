@@ -1,263 +1,289 @@
-/* ===========================
-   RideBook Luxury Theme
-   Burgundy & Nude
-=========================== */
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-:root{
-    --burgundy:#6D0F2B;
-    --burgundy-dark:#571022;
-    --nude:#E8D5C4;
-    --cream:#F7F2EE;
-    --white:#FFFFFF;
-    --text:#2E2E2E;
-    --light-text:#7A6F69;
-    --success:#6B8E6B;
-    --shadow:0 10px 30px rgba(0,0,0,.08);
-}
-
 *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
 
 body{
-    font-family:'Poppins',sans-serif;
-    background:var(--cream);
-    color:var(--text);
-    overflow:hidden;
-}
-
-#app{
-    display:flex;
-    height:100vh;
-}
-
-/* ===========================
-   Sidebar
-=========================== */
-
-#sidebar{
-
-    width:360px;
-
-    background:var(--white);
-
-    padding:30px;
-
-    box-shadow:var(--shadow);
-
-    overflow-y:auto;
-
-    z-index:1000;
-}
-
-#sidebar h1{
-
-    color:var(--burgundy);
-
-    font-size:2rem;
-
-    margin-bottom:8px;
-}
-
-#sidebar h2{
-
-    color:var(--burgundy);
-
-    margin-top:30px;
-
-    margin-bottom:15px;
-
-    font-size:1rem;
-
-    border-bottom:2px solid var(--nude);
-
-    padding-bottom:8px;
-}
-
-.instruction{
-
-    color:var(--light-text);
-
-    line-height:1.5;
-
-    margin-bottom:25px;
-}
-
-/* ===========================
-   Buttons
-=========================== */
-
-#ride-controls{
-
-    display:flex;
-
-    gap:12px;
-
-    margin-bottom:25px;
-}
-
-.hidden{
-
-    display:none !important;
+  font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  background:#faf4f1;
+  color:#2b2b2b;
 }
 
 button{
-
-    border:none;
-
-    border-radius:12px;
-
-    padding:14px 18px;
-
-    font-family:'Poppins',sans-serif;
-
-    font-weight:600;
-
-    cursor:pointer;
-
-    transition:.3s;
+  cursor:pointer;
+  border:none;
+  border-radius:10px;
+  transition:.3s;
+  font-weight:600;
 }
 
 button:hover{
+  transform:translateY(-2px);
+}
 
-    transform:translateY(-2px);
+#app{
+  display:flex;
+  height:100vh;
+}
 
-    box-shadow:0 8px 20px rgba(0,0,0,.12);
+#sidebar{
+  width:340px;
+  background:#5b1836;
+  color:#fff;
+  padding:24px;
+  overflow-y:auto;
+}
+
+#sidebar h1{
+  color:#efd6c9;
+  margin-bottom:10px;
+}
+
+#sidebar h2{
+  color:#efd6c9;
+  margin:25px 0 10px;
+  font-size:16px;
+  text-transform:uppercase;
+}
+
+.instruction{
+  color:#f7e8e0;
+  margin-bottom:18px;
+}
+
+#ride-controls{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+
+.hidden{
+  display:none!important;
 }
 
 #request-btn{
-
-    background:var(--burgundy);
-
-    color:white;
-
-    flex:1;
+  flex:1;
+  background:#7b214f;
+  color:#fff;
+  padding:12px;
 }
 
 #request-btn:hover{
-
-    background:var(--burgundy-dark);
+  background:#5b1836;
 }
 
 #reset-btn{
-
-    background:var(--nude);
-
-    color:var(--burgundy);
+  background:#d8b4a0;
+  color:#5b1836;
+  padding:12px;
 }
 
-/* ===========================
-   Ride Cards
-=========================== */
-
 #rides-list{
-
-    list-style:none;
+  list-style:none;
 }
 
 #rides-list li{
-
-    background:white;
-
-    border-radius:16px;
-
-    padding:18px;
-
-    margin-bottom:15px;
-
-    box-shadow:var(--shadow);
-
-    line-height:1.6;
+  background:#fff;
+  color:#333;
+  margin-bottom:10px;
+  padding:12px;
+  border-radius:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);
 }
 
 .status{
-
-    display:inline-block;
-
-    padding:6px 14px;
-
-    border-radius:30px;
-
-    margin-bottom:12px;
-
-    font-size:.75rem;
-
-    font-weight:600;
-
-    text-transform:uppercase;
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:12px;
+  margin-bottom:8px;
+  color:#fff;
 }
 
-.status.pending{
-
-    background:#F6E7D8;
-
-    color:#A66A00;
-}
-
-.status.accepted{
-
-    background:#EAD4DC;
-
-    color:var(--burgundy);
-}
-
-.status.completed{
-
-    background:#DCEEDB;
-
-    color:var(--success);
-}
-
-/* ===========================
-   Map
-=========================== */
+.pending{background:#c08b00;}
+.accepted{background:#2f9e44;}
+.completed{background:#555;}
 
 #map{
-
-    flex:1;
-
-    height:100vh;
+  flex:1;
+  height:100vh;
 }
 
-/* Leaflet popup */
+/* Driver Dashboard */
 
-.leaflet-popup-content-wrapper{
-
-    border-radius:12px;
+#driver-dashboard{
+  max-width:900px;
+  margin:40px auto;
+  padding:30px;
 }
 
-.leaflet-popup-tip{
-
-    background:white;
+.ride-card{
+  background:#fff;
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:15px;
+  box-shadow:0 8px 18px rgba(0,0,0,.08);
 }
 
-/* ===========================
-   Scrollbar
-=========================== */
-
-::-webkit-scrollbar{
-
-    width:8px;
+.accept-btn{
+  background:#7b214f;
+  color:#fff;
+  padding:10px 18px;
 }
 
-::-webkit-scrollbar-thumb{
-
-    background:var(--nude);
-
-    border-radius:20px;
+.complete-btn{
+  background:#d8b4a0;
+  color:#5b1836;
+  padding:10px 18px;
 }
 
-::-webkit-scrollbar-track{
-
-    background:transparent;
+.no-rides{
+  color:#777;
+  text-align:center;
 }
 
-.tagline{
-    color:var(--light-text);
-    margin-bottom:30px;
-    font-size:.95rem;
+/* Authentication */
+
+.auth-page{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#4a1736,#6d214f,#c79a88);
+}
+
+.auth-container{
+  width:1000px;
+  max-width:95%;
+  min-height:620px;
+  display:flex;
+  background:#fff;
+  border-radius:25px;
+  overflow:hidden;
+  box-shadow:0 25px 60px rgba(0,0,0,.25);
+  animation:fadeIn .8s ease;
+}
+
+.auth-left{
+  flex:1;
+  background:linear-gradient(180deg,#4a1736,#6d214f);
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  padding:60px;
+  text-align:center;
+}
+
+.auth-left h1{
+  font-size:54px;
+  margin-bottom:15px;
+}
+
+.auth-left p{
+  font-size:20px;
+  opacity:.9;
+}
+
+.auth-image{
+  width:220px;
+  margin-top:40px;
+}
+
+.auth-card{
+  flex:1;
+  padding:60px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.auth-card h2{
+  color:#6d214f;
+  font-size:38px;
+  margin-bottom:8px;
+}
+
+.subtitle{
+  color:#777;
+  margin-bottom:30px;
+}
+
+.auth-card form{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.auth-card input,
+.auth-card select{
+  padding:15px;
+  border:1px solid #ddd;
+  border-radius:12px;
+  font-size:16px;
+}
+
+.auth-card input:focus,
+.auth-card select:focus{
+  outline:none;
+  border-color:#6d214f;
+  box-shadow:0 0 10px rgba(109,33,79,.2);
+}
+
+.auth-card button{
+  background:#6d214f;
+  color:#fff;
+  padding:15px;
+  font-size:17px;
+}
+
+.auth-card button:hover{
+  background:#4a1736;
+}
+
+.divider{
+  text-align:center;
+  color:#888;
+  margin:22px 0;
+}
+
+.register-btn{
+  display:block;
+  text-align:center;
+  text-decoration:none;
+  background:#efd6c9;
+  color:#6d214f;
+  padding:15px;
+  border-radius:12px;
+  font-weight:bold;
+}
+
+.register-btn:hover{
+  background:#ddb8a6;
+}
+
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+@media(max-width:900px){
+  #app{
+    flex-direction:column;
+  }
+  #sidebar{
+    width:100%;
+  }
+  #map{
+    height:60vh;
+  }
+  .auth-container{
+    flex-direction:column;
+    min-height:auto;
+  }
+  .auth-left,.auth-card{
+    padding:40px;
+  }
 }

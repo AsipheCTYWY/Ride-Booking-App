@@ -1,90 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>RideBook Login</title>
-    <p class="tagline">Luxury rides, one tap away.</p>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RideBook | Login</title>
+<link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="auth-page">
+<div class="auth-container">
+<div class="auth-left">
+<h1>RideBook</h1>
+<p>Your ride, anytime, anywhere.</p>
+<img class="auth-image" src="https://cdn-icons-png.flaticon.com/512/3202/3202926.png" alt="Ride">
+</div>
+<div class="auth-card">
+<h2>Welcome Back</h2>
+<p class="subtitle">Sign in to continue</p>
+<form id="loginForm">
+<input type="email" id="email" placeholder="Email" required>
+<input type="password" id="password" placeholder="Password" required>
+<button type="submit">Login</button>
+</form>
+<div class="divider">OR</div>
+<a class="register-btn" href="register.html">Create Account</a>
+</div>
+</div>
+<script>
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
 
-    <h1>Login</h1>
+    e.preventDefault();
 
-    <form id="loginForm">
-        <input
-            type="email"
-            id="email"
-            placeholder="Email"
-            required
-        >
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
 
-        <br><br>
+    try {
 
-        <input
-            type="password"
-            id="password"
-            placeholder="Password"
-            required
-        >
+        const response = await fetch("/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email,
+                password
+            })
+        });
 
-        <br><br>
+        const data = await response.json();
 
-        <button type="submit">
-            Login
-        </button>
-        <button type="button"
-        id="registerBtn">Register</button>
-    </form>
+        if (response.ok) {
 
-    <script>
-        document
-            .getElementById("loginForm")
-            .addEventListener("submit", async (e) => {
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("role", data.role);
 
-                e.preventDefault();
+            if (data.role === "driver") {
+                window.location.href = "/driver.html";
+            } else {
+                window.location.href = "/passenger.html";
+            }
 
-                const email =
-                    document.getElementById("email").value;
+        } else {
+            alert(data.message);
+        }
 
-                const password =
-                    document.getElementById("password").value;
+    } catch (err) {
+        console.error(err);
+        alert("Unable to connect to the server.");
+    }
 
-                const response = await fetch("/login", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        email,
-                        password
-                    })
-                });
-
-
-                const data = await response.json();
-
-                if (data.token) {
-
-                    localStorage.setItem("token", data.token);
-                    localStorage.setItem("role", data.role);
-
-                    if (data.role === "driver"){
-                        window.location.href = "/driver.html";
-                    }else {
-                        window.location.href = "/passenger.html";
-                    }
-
-                    alert("Login successful!");
-
-                } else {
-
-                    alert(data.message);
-                }
-            });
-            document
-            .getElementById("registerBtn")
-            .addEventListener("click", () => {
-                window.location.href="/register.html";
-            });
-    </script>
-
+});
+</script>
 </body>
 </html>

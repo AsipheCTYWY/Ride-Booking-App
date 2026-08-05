@@ -1,92 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>RideBook Register</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale="1.0">
+<title>RideBook | Register</title>
+<link rel="stylesheet" href="style.css">
 </head>
-<body>
-
-<h1>Register</h1>
-
+<body class="auth-page">
+<div class="auth-container">
+<div class="auth-left">
+<h1>RideBook</h1>
+<p>Create your account and start riding.</p>
+<img class="auth-image" src="https://cdn-icons-png.flaticon.com/512/3202/3202926.png" alt="Ride">
+</div>
+<div class="auth-card">
+<h2>Create Account</h2>
+<p class="subtitle">Join RideBook today</p>
 <form id="registerForm">
-
-    <input
-        type="text"
-        id="name"
-        placeholder="Full Name"
-        required
-    >
-
-    <br><br>
-
-    <input
-        type="email"
-        id="email"
-        placeholder="Email"
-        required
-    >
-
-    <br><br>
-
-    <input
-        type="password"
-        id="password"
-        placeholder="Password"
-        required
-    >
-
-    <br><br>
-
-    <select id="role">
-        <option value="passenger">Passenger</option>
-        <option value="driver">Driver</option>
-    </select>
-
-    <br><br>
-
-    <button type="submit">
-        Register
-    </button>
-
+<input type="text" id="name" placeholder="Full Name" required>
+<input type="email" id="email" placeholder="Email" required>
+<input type="password" id="password" placeholder="Password" required>
+<select id="role" required>
+<option value="">Select Role</option>
+<option value="passenger">Passenger</option>
+<option value="driver">Driver</option>
+</select>
+<button type="submit">Register</button>
 </form>
-
+<div class="divider">Already have an account?</div>
+<a class="register-btn" href="login.html">Login</a>
+</div>
+</div>
 <script>
-
-document
-.getElementById("registerForm")
-.addEventListener("submit", async (e) => {
-
-    e.preventDefault();
-
-    const user = {
-        name: document.getElementById("name").value,
-        email: document.getElementById("email").value,
-        password: document.getElementById("password").value,
-        role: document.getElementById("role").value
-    };
-
-    const response = await fetch("/register", {
-
-        method: "POST",
-
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify(user)
-
-    });
-
-    const data = await response.json();
-
-    alert(data.message);
-
-    if (response.ok) {
-        window.location.href = "/login.html";
-    }
-
+document.getElementById("registerForm").addEventListener("submit",async(e)=>{
+e.preventDefault();
+const body={
+name:document.getElementById("name").value,
+email:document.getElementById("email").value,
+password:document.getElementById("password").value,
+role:document.getElementById("role").value
+};
+const res=await fetch("/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+const data=await res.json();
+if(res.ok){alert("Registration successful!");window.location.href="login.html";}
+else{alert(data.message);}
 });
-
 </script>
-
 </body>
 </html>
