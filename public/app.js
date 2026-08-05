@@ -1,6 +1,12 @@
 const token = localStorage.getItem("token");
+const role = localStorage.getItem("role");
+
 if (!token) {
-  window.location.href = "/login.html";
+    window.location.href="/login.html";
+}
+
+if(role !== "passenger"){
+    window.location.href="/driver.html";
 }
 
 // Initialize the Leaflet map centered on London
@@ -148,8 +154,13 @@ requestBtn.addEventListener('click', async function () {
 // Fetch all rides from the database and display them
 async function loadRides() {
   try {
-    const response = await fetch('/api/rides');
+    const response = await fetch('/api/my-rides', {
+      headers: {
+        "Authorization": localStorage.getItem("token")
+      }
+    });
     const rides = await response.json();
+    ridesList.innerHTML = "";
     rides.forEach(ride => {
       addRideToList(ride);
       addRideToMap(ride);

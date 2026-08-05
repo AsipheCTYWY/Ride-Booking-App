@@ -13,6 +13,7 @@ dns.setServers(["1.1.1.1", "8.8.8.8"]);
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path")
 const Ride = require("./models/Ride");
 
 // Create Express app
@@ -21,6 +22,9 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "login.html"));
+});
 app.use(express.static("public"));
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -40,13 +44,68 @@ app.post('/api/rides', auth, async (req, res) => {
   }
 });
 
-app.get('/api/rides', async (req, res) => {
+app.get('/api/my-rides', async (req, res) => {
   try {
-    const rides = await Ride.find().sort({ createdAt: -1 });
+    const rides = await Ride.find({
+      passenger: req.user.userId
+    }).sort({ createdAt: -1 });
     res.json(rides);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+app.get("/api/available-rides", auth, async (req, res) => {
+
+    if (req.user.role !== "driver") {
+        return res.status(403).json({
+            message: "Access denied"
+        });
+    }
+
+    try {
+
+        const rides = await Ride.find({
+            status: "pending"
+        });
+
+        res.json(rides);
+
+    } catch (err) {
+
+        res.status(500).json({
+            error: err.message
+        });
+
+    }
+
+});
+app.get("/api/my-driver-rides", auth, async (req, res) => {
+
+    if (req.user.role !== "driver") {
+        return res.status(403).json({ message: "Access denied" });
+    }
+
+    const rides = await Ride.find({
+        driver: req.user.userId,
+        status: "accepted"
+    });
+
+    res.json(rides);
+});
+
+app.get("/api/completed-rides", auth, async (req, res) => {
+
+    if (req.user.role !== "driver") {
+        return res.status(403).json({ message: "Access denied" });
+    }
+
+    const rides = await Ride.find({
+        driver: req.user.userId,
+        status: "completed"
+    });
+
+    res.json(rides);
 });
 
 app.patch('/api/rides/:id', auth, async (req, res) => {
@@ -59,15 +118,18 @@ app.patch('/api/rides/:id', auth, async (req, res) => {
 
     try {
 
-        const { status } = req.body;
+       const { status } = req.body;
+       const update = { status };
 
-        const ride = await Ride.findByIdAndUpdate(
-            req.params.id,
-            { status },
-            { new: true }
-        );
-
-        res.json(ride);
+       if (status === "accepted") {
+        update.driver = req.user.userId;
+      }
+      const ride = await Ride.findByIdAndUpdate(
+        req.params.id,
+        update,
+    { returnDocument: "after" }
+  );
+    res.json(ride);
 
     } catch (err) {
 

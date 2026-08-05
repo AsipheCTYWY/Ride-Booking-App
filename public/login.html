@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>RideBook Login</title>
+    <p class="tagline">Luxury rides, one tap away.</p>
 </head>
 <body>
 
@@ -29,6 +30,8 @@
         <button type="submit">
             Login
         </button>
+        <button type="button"
+        id="registerBtn">Register</button>
     </form>
 
     <script>
@@ -55,6 +58,7 @@
                     })
                 });
 
+
                 const data = await response.json();
 
                 if (data.token) {
@@ -65,16 +69,20 @@
                     if (data.role === "driver"){
                         window.location.href = "/driver.html";
                     }else {
-                        window.location.href = "/index.html";
+                        window.location.href = "/passenger.html";
                     }
 
                     alert("Login successful!");
 
-                    window.location.href = "/";
                 } else {
 
                     alert(data.message);
                 }
+            });
+            document
+            .getElementById("registerBtn")
+            .addEventListener("click", () => {
+                window.location.href="/register.html";
             });
     </script>
 

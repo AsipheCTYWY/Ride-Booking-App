@@ -1,125 +1,263 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ===========================
+   RideBook Luxury Theme
+   Burgundy & Nude
+=========================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root{
+    --burgundy:#6D0F2B;
+    --burgundy-dark:#571022;
+    --nude:#E8D5C4;
+    --cream:#F7F2EE;
+    --white:#FFFFFF;
+    --text:#2E2E2E;
+    --light-text:#7A6F69;
+    --success:#6B8E6B;
+    --shadow:0 10px 30px rgba(0,0,0,.08);
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  height: 100vh;
-  overflow: hidden;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-#app {
-  display: flex;
-  height: 100vh;
+body{
+    font-family:'Poppins',sans-serif;
+    background:var(--cream);
+    color:var(--text);
+    overflow:hidden;
 }
 
-#sidebar {
-  width: 320px;
-  padding: 20px;
-  background: #1a1a2e;
-  color: #ffffff;
-  overflow-y: auto;
-  flex-shrink: 0;
+#app{
+    display:flex;
+    height:100vh;
 }
 
-#sidebar h1 {
-  font-size: 1.5rem;
-  margin-bottom: 10px;
-  color: #00d4aa;
+/* ===========================
+   Sidebar
+=========================== */
+
+#sidebar{
+
+    width:360px;
+
+    background:var(--white);
+
+    padding:30px;
+
+    box-shadow:var(--shadow);
+
+    overflow-y:auto;
+
+    z-index:1000;
 }
 
-#sidebar h2 {
-  font-size: 1rem;
-  margin-top: 20px;
-  margin-bottom: 10px;
-  color: #aaaaaa;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+#sidebar h1{
+
+    color:var(--burgundy);
+
+    font-size:2rem;
+
+    margin-bottom:8px;
 }
 
-.instruction {
-  font-size: 0.9rem;
-  color: #cccccc;
-  margin-bottom: 15px;
+#sidebar h2{
+
+    color:var(--burgundy);
+
+    margin-top:30px;
+
+    margin-bottom:15px;
+
+    font-size:1rem;
+
+    border-bottom:2px solid var(--nude);
+
+    padding-bottom:8px;
 }
 
-#ride-controls {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
+.instruction{
+
+    color:var(--light-text);
+
+    line-height:1.5;
+
+    margin-bottom:25px;
 }
 
-#ride-controls.hidden {
-  display: none;
+/* ===========================
+   Buttons
+=========================== */
+
+#ride-controls{
+
+    display:flex;
+
+    gap:12px;
+
+    margin-bottom:25px;
 }
 
-button {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
+.hidden{
+
+    display:none !important;
 }
 
-#request-btn {
-  background: #00d4aa;
-  color: #1a1a2e;
-  flex: 1;
+button{
+
+    border:none;
+
+    border-radius:12px;
+
+    padding:14px 18px;
+
+    font-family:'Poppins',sans-serif;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.3s;
 }
 
-#request-btn:hover {
-  background: #00b894;
+button:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
 }
 
-#reset-btn {
-  background: #444466;
-  color: #ffffff;
+#request-btn{
+
+    background:var(--burgundy);
+
+    color:white;
+
+    flex:1;
 }
 
-#reset-btn:hover {
-  background: #555577;
+#request-btn:hover{
+
+    background:var(--burgundy-dark);
 }
 
-#rides-list {
-  list-style: none;
+#reset-btn{
+
+    background:var(--nude);
+
+    color:var(--burgundy);
 }
 
-#rides-list li {
-  background: #16213e;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  font-size: 0.85rem;
+/* ===========================
+   Ride Cards
+=========================== */
+
+#rides-list{
+
+    list-style:none;
 }
 
-#rides-list li .status {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
+#rides-list li{
+
+    background:white;
+
+    border-radius:16px;
+
+    padding:18px;
+
+    margin-bottom:15px;
+
+    box-shadow:var(--shadow);
+
+    line-height:1.6;
 }
 
-#rides-list li .status.pending {
-  background: #ffc107;
-  color: #1a1a2e;
+.status{
+
+    display:inline-block;
+
+    padding:6px 14px;
+
+    border-radius:30px;
+
+    margin-bottom:12px;
+
+    font-size:.75rem;
+
+    font-weight:600;
+
+    text-transform:uppercase;
 }
 
-#rides-list li .status.accepted {
-  background: #00d4aa;
-  color: #1a1a2e;
+.status.pending{
+
+    background:#F6E7D8;
+
+    color:#A66A00;
 }
 
-#rides-list li .status.completed {
-  background: #6c757d;
-  color: #ffffff;
+.status.accepted{
+
+    background:#EAD4DC;
+
+    color:var(--burgundy);
 }
 
-#map {
-  flex: 1;
-  height: 100vh;
+.status.completed{
+
+    background:#DCEEDB;
+
+    color:var(--success);
+}
+
+/* ===========================
+   Map
+=========================== */
+
+#map{
+
+    flex:1;
+
+    height:100vh;
+}
+
+/* Leaflet popup */
+
+.leaflet-popup-content-wrapper{
+
+    border-radius:12px;
+}
+
+.leaflet-popup-tip{
+
+    background:white;
+}
+
+/* ===========================
+   Scrollbar
+=========================== */
+
+::-webkit-scrollbar{
+
+    width:8px;
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:var(--nude);
+
+    border-radius:20px;
+}
+
+::-webkit-scrollbar-track{
+
+    background:transparent;
+}
+
+.tagline{
+    color:var(--light-text);
+    margin-bottom:30px;
+    font-size:.95rem;
 }

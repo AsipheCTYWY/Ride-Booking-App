@@ -7,6 +7,12 @@ const rideSchema = new mongoose.Schema({
         ref: "User"
     },
 
+    driver: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+    },
+
     pickup: {
         lat: Number,
         lng: Number
