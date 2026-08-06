@@ -1,73 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RideBook - Driver Dashboard</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body {
-      overflow: auto;
-    }
-    #driver-dashboard {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 30px 20px;
-      background: #1a1a2e;
-      min-height: 100vh;
-      color: #ffffff;
-    }
-    #driver-dashboard h1 {
-      color: #00d4aa;
-      margin-bottom: 5px;
-    }
-    #driver-dashboard p {
-      color: #aaaaaa;
-      margin-bottom: 20px;
-    }
-        .ride-card {
-      background: #16213e;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-    }
-    .ride-card .coords {
-      font-size: 0.85rem;
-      color: #cccccc;
-      margin-bottom: 10px;
-    }
-    .ride-card button {
-      margin-right: 8px;
-    }
-    .accept-btn {
-      background: #00d4aa;
-      color: #1a1a2e;
-    }
-    .complete-btn {
-      background: #6c63ff;
-      color: #ffffff;
-    }
-    .no-rides {
-      color: #666;
-      font-style: italic;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RideBook Driver</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <div id="driver-dashboard">
-    <h1>Driver Dashboard</h1>
-    <p>Pending rides will appear below. Accept or complete them.</p>
-    <div id="driver-rides"></div>
-    <h2>Available Rides</h2>
-    <div id="available-rides"></div>
-    
-    <h2>My Active Rides</h2>
-    <div id="my-rides"></div>
-    
-    <h2>Completed Rides</h2>
-    <div id="completed-rides"></div>
-    <button id="driver-logout-btn">Logout</button>
-  </div>
-  <script src="driver.js"></script>
+
+<body class="driver-body">
+
+<header class="driver-header">
+
+    <div>
+        <h1>RideBook Driver</h1>
+        <p>Manage your rides</p>
+    </div>
+
+    <button id="driver-logout-btn" class="logout-btn">
+        Logout
+    </button>
+
+</header>
+
+<main class="driver-container">
+
+    <section>
+
+        <h2>Available Rides</h2>
+
+        <div id="available-rides"></div>
+
+    </section>
+
+    <section>
+
+        <h2>My Active Rides</h2>
+
+        <div id="my-rides"></div>
+
+    </section>
+
+    <section>
+
+        <h2>Completed Rides</h2>
+
+        <div id="completed-rides"></div>
+
+    </section>
+
+</main>
+
+<script src="driver.js"></script>
+
 </body>
 </html>

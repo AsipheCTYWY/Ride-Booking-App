@@ -287,3 +287,222 @@ button:hover{
     padding:40px;
   }
 }
+/* ===========================
+   DRIVER DASHBOARD
+===========================*/
+
+.driver-body{
+
+    background:#F5E9E2;
+    margin:0;
+    min-height:100vh;
+    overflow-y:auto;
+    font-family:Segoe UI, sans-serif;
+
+}
+
+.driver-header{
+
+    background:#5C1D2E;
+    color:white;
+
+    padding:25px 50px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    box-shadow:0 3px 15px rgba(0,0,0,.25);
+
+}
+
+.driver-header h1{
+
+    font-size:38px;
+
+}
+
+.driver-header p{
+
+    color:#E7D4CB;
+    margin-top:8px;
+
+}
+
+.driver-container{
+
+    padding:40px;
+
+}
+
+.driver-container section{
+
+    margin-bottom:50px;
+
+}
+
+.driver-container h2{
+
+    color:#5C1D2E;
+
+    margin-bottom:20px;
+
+    font-size:32px;
+
+}
+
+.ride-card{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:22px;
+
+    margin-bottom:18px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+    transition:.25s;
+
+}
+
+.ride-card:hover{
+
+    transform:translateY(-4px);
+
+}
+
+.coords{
+
+    font-size:17px;
+
+    color:#444;
+
+    line-height:1.8;
+
+    margin-bottom:20px;
+
+}
+
+.accept-btn{
+
+    background:#7A1F3D;
+
+    color:white;
+
+    padding:12px 28px;
+
+    border:none;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+}
+
+.accept-btn:hover{
+
+    background:#5C1D2E;
+
+}
+
+.complete-btn{
+
+    background:#D9B8A8;
+
+    color:#5C1D2E;
+
+    padding:12px 28px;
+
+    border:none;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+}
+
+.complete-btn:hover{
+
+    background:#C89D89;
+
+}
+
+.completed{
+
+    display:inline-block;
+
+    background:#8E8E8E;
+
+    color:white;
+
+    padding:10px 22px;
+
+    border-radius:30px;
+
+}
+
+.logout-btn{
+
+    background:white;
+
+    color:#5C1D2E;
+
+    padding:12px 25px;
+
+    border:none;
+
+    border-radius:10px;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+    font-weight:bold;
+
+}
+
+.logout-btn:hover{
+
+    background:#E7D4CB;
+
+}
+
+.no-rides{
+
+    color:#777;
+
+    font-size:18px;
+
+}
+/* Passenger sidebar header */
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.sidebar-header h1 {
+    margin: 0;
+}
+
+.logout-btn {
+    background: #F5E9E2;
+    color: #5C1D2E;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.logout-btn:hover {
+    background: #E7D4CB;
+}

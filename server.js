@@ -44,7 +44,7 @@ app.post('/api/rides', auth, async (req, res) => {
   }
 });
 
-app.get('/api/my-rides', async (req, res) => {
+app.get('/api/my-rides', auth, async (req, res) => {
   try {
     const rides = await Ride.find({
       passenger: req.user.userId
