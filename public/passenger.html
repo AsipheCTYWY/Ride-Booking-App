@@ -1,49 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RideBook - Request a Ride</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin="">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>RideBook - Request a Ride</title>
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <div id="app">
-    <div id="sidebar">
 
-    <div class="sidebar-header">
+<body class="passenger-body">
 
-        <h1>RideBook</h1>
+<div class="passenger-layout">
 
-        <button id="index-logout-btn" class="logout-btn">
-            Logout
-        </button>
+    <!-- =====================================
+         LEFT BOOKING PANEL
+    ====================================== -->
 
-    </div>
+    <aside class="booking-panel">
 
-    <p class="instruction" id="instruction">
-        Click the map to set your pickup location
-    </p>
+        <!-- HEADER -->
 
-    <div id="ride-controls" class="hidden">
-        <button id="request-btn">Request Ride</button>
-        <button id="reset-btn">Reset</button>
-    </div>
+        <div class="brand-row">
 
-    <h2>Requested Rides</h2>
+            <div>
+                <h1>RideBook</h1>
 
-    <ul id="rides-list"></ul>
+                <p>Your journey, simplified.</p>
+            </div>
+
+            <button
+                id="index-logout-btn"
+                class="logout-btn">
+                Logout
+            </button>
+
+        </div>
+
+
+        <!-- LOCATION -->
+
+        <div class="location-label">
+
+            <span class="location-dot"></span>
+
+            Gqeberha, Eastern Cape
+
+        </div>
+
+
+        <!-- HERO -->
+
+        <h2 class="hero-title">
+            Go anywhere with RideBook
+        </h2>
+
+
+        <!-- =====================================
+             BOOKING CARD
+        ====================================== -->
+
+        <div class="booking-card">
+
+            <h3>Plan your ride</h3>
+
+
+            <!-- PICKUP -->
+
+            <div class="search-box">
+
+                <span class="search-icon pickup-icon">
+                    ●
+                </span>
+
+                <input
+                    type="text"
+                    id="pickup-search"
+                    placeholder="Pickup location"
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <div class="search-divider"></div>
+
+
+            <!-- DROPOFF -->
+
+            <div class="search-box">
+
+                <span class="search-icon dropoff-icon">
+                    ■
+                </span>
+
+                <input
+                    type="text"
+                    id="dropoff-search"
+                    placeholder="Drop-off location"
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <!-- SEARCH RESULTS -->
+
+            <div id="search-results"></div>
+
+
+            <!-- BUTTONS -->
+
+            <div class="action-row">
+
+                <button
+                    id="request-btn"
+                    disabled>
+                    Request Ride
+                </button>
+
+                <button
+                    id="reset-btn"
+                    class="secondary-btn">
+                    Reset
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================
+             ACTIVE RIDE
+        ====================================== -->
+
+        <section class="passenger-section">
+
+            <h3>Active Ride</h3>
+
+            <div id="active-ride">
+
+                <p class="no-rides">
+                    No active ride.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             RIDE HISTORY
+        ====================================== -->
+
+        <section class="passenger-section history-section">
+
+            <h3>Ride History</h3>
+
+            <div id="ride-history">
+
+                <p class="no-rides">
+                    No ride history yet.
+                </p>
+
+            </div>
+
+        </section>
+
+    </aside>
+
+
+    <!-- =====================================
+         MAP
+    ====================================== -->
+
+    <main class="map-panel">
+
+        <div class="map-heading">
+
+            <span>📍</span>
+
+            <span>Plan your route</span>
+
+        </div>
+
+        <div id="map"></div>
+
+    </main>
 
 </div>
-    <div id="map"></div>
-  </div>
 
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+<!-- LEAFLET -->
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""></script>
-  <script src="app.js"></script>
+    crossorigin="">
+</script>
+
+
+<!-- YOUR JAVASCRIPT -->
+
+<script src="app.js"></script>
+
 </body>
+
 </html>

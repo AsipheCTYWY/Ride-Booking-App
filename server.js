@@ -34,21 +34,68 @@ mongoose.connect(MONGODB_URI)
   .catch(err => console.error('MongoDB connection error:', err));
 
 app.post('/api/rides', auth, async (req, res) => {
-  try {
-    const { pickup, dropoff } = req.body;
-    const ride = new Ride({ passenger: req.user.userId, pickup, dropoff });
-    const savedRide = await ride.save();
-    res.status(201).json(savedRide);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+
+    try {
+        const existingRide = await Ride.findOne({
+            passenger: req.user.userId,
+            status: {
+                $in: ["pending", "accepted"]
+            }
+        });
+
+        if (existingRide) {
+
+            return res.status(400).json({
+                message:
+                    "You already have an active ride. Please cancel it or wait for it to be completed."
+            });
+
+        }
+
+        const {
+            pickup,
+            pickupAddress,
+            dropoff,
+            dropoffAddress
+        } = req.body;
+
+        const ride = new Ride({
+
+            passenger: req.user.userId,
+
+            pickup,
+            pickupAddress,
+
+            dropoff,
+            dropoffAddress,
+
+            status: "pending"
+
+        });
+
+        const savedRide = await ride.save();
+
+        res.status(201).json(savedRide);
+
+    } catch (err) {
+
+        console.error("Error saving ride:", err);
+
+        res.status(400).json({
+            error: err.message
+        });
+
+    }
+
 });
 
 app.get('/api/my-rides', auth, async (req, res) => {
   try {
     const rides = await Ride.find({
       passenger: req.user.userId
-    }).sort({ createdAt: -1 });
+    })
+    .populate("driver", "name email")
+    .sort({ createdAt: -1 });
     res.json(rides);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -67,7 +114,7 @@ app.get("/api/available-rides", auth, async (req, res) => {
 
         const rides = await Ride.find({
             status: "pending"
-        });
+        }).populate("passenger", "name email pickupAddress dropoffAddress");
 
         res.json(rides);
 
@@ -83,29 +130,47 @@ app.get("/api/available-rides", auth, async (req, res) => {
 app.get("/api/my-driver-rides", auth, async (req, res) => {
 
     if (req.user.role !== "driver") {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({
+            message: "Access denied"
+        });
     }
 
-    const rides = await Ride.find({
-        driver: req.user.userId,
-        status: "accepted"
-    });
+    try {
+        const rides = await Ride.find({
+            driver: req.user.userId,
+            status: "accepted"
+        }).populate("passenger", "name email pickupAddress dropoffAddress");
 
-    res.json(rides);
+        res.json(rides);
+
+    } catch (err) {
+        res.status(500).json({
+            error: err.message
+        });
+    }
 });
 
 app.get("/api/completed-rides", auth, async (req, res) => {
 
     if (req.user.role !== "driver") {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({
+            message: "Access denied"
+        });
     }
 
-    const rides = await Ride.find({
-        driver: req.user.userId,
-        status: "completed"
-    });
+    try {
+        const rides = await Ride.find({
+            driver: req.user.userId,
+            status: "completed"
+        }).populate("passenger", "name email pickupAddress dropoffAddress");
 
-    res.json(rides);
+        res.json(rides);
+
+    } catch (err) {
+        res.status(500).json({
+            error: err.message
+        });
+    }
 });
 
 app.patch('/api/rides/:id', auth, async (req, res) => {
@@ -118,22 +183,115 @@ app.patch('/api/rides/:id', auth, async (req, res) => {
 
     try {
 
-       const { status } = req.body;
-       const update = { status };
+        const { status } = req.body;
 
-       if (status === "accepted") {
-        update.driver = req.user.userId;
-      }
-      const ride = await Ride.findByIdAndUpdate(
-        req.params.id,
-        update,
-    { returnDocument: "after" }
-  );
-    res.json(ride);
+        if (!["accepted", "completed"].includes(status)) {
+            return res.status(400).json({
+                message: "Invalid ride status"
+            });
+        }
+
+        const update = {
+            status
+        };
+
+        // Assign the driver when accepting
+        if (status === "accepted") {
+            update.driver = req.user.userId;
+        }
+
+        // Do NOT remove driver when completing
+        const ride = await Ride.findByIdAndUpdate(
+            req.params.id,
+            update,
+            {
+                returnDocument: "after"
+            }
+        ).populate("passenger", "name email");
+
+        if (!ride) {
+            return res.status(404).json({
+                message: "Ride not found"
+            });
+        }
+
+        res.json(ride);
 
     } catch (err) {
 
+        console.error(err);
+
         res.status(400).json({
+            error: err.message
+        });
+
+    }
+
+});
+
+// ==========================================
+// PASSENGER CANCEL RIDE
+// ==========================================
+
+app.patch("/api/rides/:id/cancel", auth, async (req, res) => {
+
+    try {
+
+        console.log("CANCEL REQUEST RECEIVED");
+        console.log("Ride ID:", req.params.id);
+        console.log("User:", req.user);
+
+        // Only passengers can cancel through this endpoint
+        if (req.user.role !== "passenger") {
+
+            return res.status(403).json({
+                message: "Only passengers can cancel rides"
+            });
+
+        }
+
+        const ride = await Ride.findOne({
+            _id: req.params.id,
+            passenger: req.user.userId
+        });
+
+        if (!ride) {
+
+            return res.status(404).json({
+                message: "Ride not found"
+            });
+
+        }
+
+        // Don't allow cancellation of completed/cancelled rides
+        if (
+            ride.status === "completed" ||
+            ride.status === "cancelled"
+        ) {
+
+            return res.status(400).json({
+                message: "This ride cannot be cancelled"
+            });
+
+        }
+
+        ride.status = "cancelled";
+
+        await ride.save();
+
+        res.json({
+            message: "Ride cancelled successfully",
+            ride
+        });
+
+    } catch (err) {
+
+        console.error(
+            "Cancel ride error:",
+            err
+        );
+
+        res.status(500).json({
             error: err.message
         });
 
@@ -227,4 +385,28 @@ app.post("/login", async (req, res) => {
 
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
+});
+
+app.get("/api/passenger-active-ride", auth, async (req, res) => {
+
+    try {
+
+        const ride = await Ride.findOne({
+            passenger: req.user.userId,
+            status: {
+                $in: ["pending", "accepted"]
+            }
+        })
+        .populate("driver", "name email");
+
+        res.json(ride);
+
+    } catch (err) {
+
+        res.status(500).json({
+            error: err.message
+        });
+
+    }
+
 });
