@@ -15,182 +15,198 @@
 
 <body class="passenger-body">
 
-<div class="passenger-layout">
+<div class="passenger-page">
 
-    <!-- =====================================
-         LEFT BOOKING PANEL
-    ====================================== -->
-
-    <aside class="booking-panel">
-
-        <!-- HEADER -->
-
-        <div class="brand-row">
-
-            <div>
-                <h1>RideBook</h1>
-
-                <p>Your journey, simplified.</p>
-            </div>
-
-            <button
-                id="index-logout-btn"
-                class="logout-btn">
-                Logout
-            </button>
-
-        </div>
-
-
-        <!-- LOCATION -->
-
-        <div class="location-label">
-
-            <span class="location-dot"></span>
-
-            Gqeberha, Eastern Cape
-
-        </div>
-
-
-        <!-- HERO -->
-
-        <h2 class="hero-title">
-            Go anywhere with RideBook
-        </h2>
-
+    <div class="passenger-layout">
 
         <!-- =====================================
-             BOOKING CARD
+             LEFT BOOKING PANEL
         ====================================== -->
 
-        <div class="booking-card">
+        <aside class="booking-panel">
 
-            <h3>Plan your ride</h3>
+            <!-- HEADER -->
 
+            <div class="brand-row">
 
-            <!-- PICKUP -->
+                <div>
+                    <h1>RideBook</h1>
 
-            <div class="search-box">
-
-                <span class="search-icon pickup-icon">
-                    ●
-                </span>
-
-                <input
-                    type="text"
-                    id="pickup-search"
-                    placeholder="Pickup location"
-                    autocomplete="off"
-                >
-
-            </div>
-
-
-            <div class="search-divider"></div>
-
-
-            <!-- DROPOFF -->
-
-            <div class="search-box">
-
-                <span class="search-icon dropoff-icon">
-                    ■
-                </span>
-
-                <input
-                    type="text"
-                    id="dropoff-search"
-                    placeholder="Drop-off location"
-                    autocomplete="off"
-                >
-
-            </div>
-
-
-            <!-- SEARCH RESULTS -->
-
-            <div id="search-results"></div>
-
-
-            <!-- BUTTONS -->
-
-            <div class="action-row">
+                    <p>Your journey, simplified.</p>
+                </div>
 
                 <button
-                    id="request-btn"
-                    disabled>
-                    Request Ride
-                </button>
-
-                <button
-                    id="reset-btn"
-                    class="secondary-btn">
-                    Reset
+                    id="index-logout-btn"
+                    class="logout-btn">
+                    Logout
                 </button>
 
             </div>
 
-        </div>
 
+            <!-- USER PROFILE -->
 
-        <!-- =====================================
-             ACTIVE RIDE
-        ====================================== -->
+            <div class="passenger-profile">
 
-        <section class="passenger-section">
+                <div class="profile-avatar" id="profile-avatar">?</div>
 
-            <h3>Active Ride</h3>
-
-            <div id="active-ride">
-
-                <p class="no-rides">
-                    No active ride.
-                </p>
+                <div class="profile-info">
+                    <strong id="profile-name">Loading...</strong>
+                    <small id="profile-email"></small>
+                </div>
 
             </div>
 
-        </section>
 
+            <!-- LOCATION -->
 
-        <!-- =====================================
-             RIDE HISTORY
-        ====================================== -->
+            <div class="location-label">
 
-        <section class="passenger-section history-section">
+                <span class="location-dot"></span>
 
-            <h3>Ride History</h3>
-
-            <div id="ride-history">
-
-                <p class="no-rides">
-                    No ride history yet.
-                </p>
+                Gqeberha, Eastern Cape
 
             </div>
 
-        </section>
 
-    </aside>
+            <!-- HERO -->
+
+            <h2 class="hero-title">
+                Go anywhere with RideBook
+            </h2>
 
 
-    <!-- =====================================
-         MAP
-    ====================================== -->
+            <!-- =====================================
+                 BOOKING CARD
+            ====================================== -->
 
-    <main class="map-panel">
+            <div class="booking-card">
 
-        <div class="map-heading">
+                <h3>Plan your ride</h3>
 
-            <span>📍</span>
 
-            <span>Plan your route</span>
+                <!-- PICKUP -->
 
-        </div>
+                <div class="search-box">
 
-        <div id="map"></div>
+                    <span class="search-icon pickup-icon">
+                        ●
+                    </span>
 
-    </main>
+                    <input
+                        type="text"
+                        id="pickup-search"
+                        placeholder="Pickup location"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <div class="search-divider"></div>
+
+
+                <!-- DROPOFF -->
+
+                <div class="search-box">
+
+                    <span class="search-icon dropoff-icon">
+                        ■
+                    </span>
+
+                    <input
+                        type="text"
+                        id="dropoff-search"
+                        placeholder="Drop-off location"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <!-- SEARCH RESULTS -->
+
+                <div id="search-results"></div>
+
+
+                <!-- PRICE DETAILS -->
+
+                <div id="price-details" class="price-details hidden">
+                    <span>Estimated Fare</span>
+                    <strong id="price-amount">--</strong>
+                </div>
+
+
+                <!-- BUTTONS -->
+
+                <div class="action-row">
+
+                    <button
+                        id="request-btn"
+                        disabled>
+                        Request Ride
+                    </button>
+
+                    <button
+                        id="reset-btn"
+                        class="secondary-btn">
+                        Reset
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================
+                 ACTIVE RIDE
+            ====================================== -->
+
+            <section class="passenger-section">
+
+                <h3>Active Ride</h3>
+
+                <div id="active-ride">
+
+                    <p class="no-rides">
+                        No active ride.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- =====================================
+                 RIDE HISTORY LINK
+            ====================================== -->
+
+            <a href="history.html" class="secondary-btn view-history-btn">
+                View Ride History
+            </a>
+
+        </aside>
+
+
+        <!-- =====================================
+             MAP
+        ====================================== -->
+
+        <main class="map-panel">
+
+            <div class="map-heading">
+
+                <span>📍</span>
+
+                <span>Plan your route</span>
+
+            </div>
+
+            <div id="map"></div>
+
+        </main>
+
+    </div>
 
 </div>
 

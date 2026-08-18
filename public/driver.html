@@ -1,57 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RideBook Driver</title>
 
+    <title>RideBook Driver</title>
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+>
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="driver-body">
+<body class="driver-dash-body">
 
-<header class="driver-header">
+<div class="driver-layout">
 
-    <div>
-        <h1>RideBook Driver</h1>
-        <p>Manage your rides</p>
-    </div>
+    <!-- =====================================
+         DRIVER PANEL (sidebar)
+    ====================================== -->
 
-    <button id="driver-logout-btn" class="logout-btn">
-        Logout
-    </button>
+    <aside class="driver-panel">
 
-</header>
+        <!-- PROFILE + LOGOUT -->
 
-<main class="driver-container">
+        <div class="driver-profile-row">
 
-    <section>
+            <div class="driver-profile">
 
-        <h2>Available Rides</h2>
+                <div class="profile-avatar" id="driver-avatar">?</div>
 
-        <div id="available-rides"></div>
+                <div class="profile-info">
+                    <strong id="driver-name">Loading...</strong>
+                    <small id="driver-meta"></small>
+                </div>
 
-    </section>
+            </div>
 
-    <section>
+            <button id="driver-logout-btn" class="logout-btn">
+                Logout
+            </button>
 
-        <h2>My Active Rides</h2>
+        </div>
 
-        <div id="my-rides"></div>
 
-    </section>
+        <!-- EARNINGS + ONLINE TOGGLE -->
 
-    <section>
+        <div class="driver-status-row">
 
-        <h2>Completed Rides</h2>
+            <div class="earnings-badge">
+                <span>Today</span>
+                <strong id="earnings-today">R0.00</strong>
+            </div>
 
-        <div id="completed-rides"></div>
+            <label class="online-toggle">
+                <input type="checkbox" id="online-toggle" checked>
+                <span class="toggle-track">
+                    <span class="toggle-thumb"></span>
+                </span>
+                <span class="toggle-label" id="online-label">Online</span>
+            </label>
 
-    </section>
+        </div>
 
-</main>
+
+        <!-- LOCATION -->
+
+        <div class="location-label">
+            <span class="location-dot"></span>
+            <span id="driver-location-label">Locating you…</span>
+        </div>
+
+
+        <!-- =====================================
+             AVAILABLE TRIPS
+        ====================================== -->
+
+        <section class="driver-section">
+
+            <div class="driver-section-heading">
+                <h3>Available Trips</h3>
+                <span class="count-badge" id="available-count">0</span>
+            </div>
+
+            <div class="rate-badge" id="rate-badge">
+                R15.00 base + R8.50/km
+            </div>
+
+            <div id="available-rides">
+                <p class="no-rides">Loading trips…</p>
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             MY ACTIVE RIDE(S)
+        ====================================== -->
+
+        <section class="driver-section">
+
+            <h3>My Active Ride</h3>
+
+            <div id="my-rides">
+                <p class="no-rides">No active ride.</p>
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             RIDE HISTORY LINK
+        ====================================== -->
+
+        <a href="driver-history.html" class="ride-history-link">
+
+            <span class="history-icon">🕓</span>
+
+            <span class="history-link-text">
+                <strong>Ride History</strong>
+                <small id="history-summary">View your completed trips</small>
+            </span>
+
+            <span class="chevron">›</span>
+
+        </a>
+
+    </aside>
+
+
+    <!-- =====================================
+         MAP
+    ====================================== -->
+
+    <main class="map-panel">
+
+        <div class="map-heading">
+            <span>📍</span>
+            <span id="map-heading-text">Johannesburg</span>
+        </div>
+
+        <div id="map"></div>
+
+    </main>
+
+</div>
+
+
+<!-- LEAFLET -->
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin="">
+</script>
 
 <script src="driver.js"></script>
 
 </body>
+
 </html>

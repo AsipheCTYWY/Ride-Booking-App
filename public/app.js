@@ -21,8 +21,17 @@ const searchResults =
 const activeRide =
     document.getElementById("active-ride");
 
-const rideHistory =
-    document.getElementById("ride-history");
+// Ride history now lives on its own page (history.js
+// handles it) — this file only deals with the active ride.
+
+// Profile block
+const profileAvatar = document.getElementById("profile-avatar");
+const profileName = document.getElementById("profile-name");
+const profileEmail = document.getElementById("profile-email");
+
+// Price details
+const priceDetails = document.getElementById("price-details");
+const priceAmount = document.getElementById("price-amount");
 
 
 // ==========================================
@@ -119,6 +128,46 @@ const redIcon = L.icon({
 });
 
 
+// ==========================================
+// PROFILE
+// ==========================================
+
+async function loadProfile() {
+
+    try {
+
+        const response = await fetch("/api/me", {
+            headers: {
+                "Authorization": token
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Could not load profile");
+        }
+
+        const user = await response.json();
+
+        const name = user.name || "Passenger";
+
+        profileName.textContent = name;
+        profileEmail.textContent = user.email || "";
+        profileAvatar.textContent = name.charAt(0).toUpperCase();
+
+    } catch (error) {
+
+        console.error("Profile load error:", error);
+
+        // Fallback if /api/me isn't available yet
+        profileName.textContent = "Passenger";
+        profileAvatar.textContent = "P";
+
+    }
+
+}
+
+loadProfile();
+
 
 // ==========================================
 // SEARCH BOX SELECTION
@@ -168,10 +217,16 @@ map.on("click", async function (e) {
         }
 
 
-        // Save pickup coordinates
+        // Get address from coordinates
+        pickupAddress = await getAddress(lat, lng);
+
+
+        // Save pickup coordinates + address together
+        // (rideData below relies on selectedPickup.address existing)
         selectedPickup = {
             lat: lat,
-            lng: lng
+            lng: lng,
+            address: pickupAddress
         };
 
 
@@ -185,10 +240,6 @@ map.on("click", async function (e) {
         .addTo(map)
         .bindPopup("Pickup")
         .openPopup();
-
-
-        // Get address from coordinates
-        pickupAddress = await getAddress(lat, lng);
 
 
         // Put address into pickup search box
@@ -213,11 +264,6 @@ map.on("click", async function (e) {
             selectedPickup
         );
 
-        console.log(
-            "Pickup address:",
-            pickupAddress
-        );
-
 
         return;
     }
@@ -237,10 +283,18 @@ map.on("click", async function (e) {
         }
 
 
-        // Save dropoff coordinates
+        // Get address
+        dropoffAddress = await getAddress(
+            lat,
+            lng
+        );
+
+
+        // Save dropoff coordinates + address together
         selectedDropoff = {
             lat: lat,
-            lng: lng
+            lng: lng,
+            address: dropoffAddress
         };
 
 
@@ -254,13 +308,6 @@ map.on("click", async function (e) {
         .addTo(map)
         .bindPopup("Drop-off")
         .openPopup();
-
-
-        // Get address
-        dropoffAddress = await getAddress(
-            lat,
-            lng
-        );
 
 
         // Put address into dropoff search box
@@ -285,10 +332,8 @@ map.on("click", async function (e) {
             selectedDropoff
         );
 
-        console.log(
-            "Drop-off address:",
-            dropoffAddress
-        );
+
+        checkRideReady();
 
 
         // Draw route if your showRoute()
@@ -315,9 +360,32 @@ map.on("click", async function (e) {
 // REVERSE GEOCODING
 // ==========================================
 
-async function getAddress(lat, lng) {
+// Nominatim's usage policy allows roughly 1 request/sec.
+// Typing quickly or clicking pickup+dropoff back-to-back
+// can blow past that and get requests rejected, which is
+// what was showing raw coordinates instead of an address.
+// This forces a minimum gap between calls to Nominatim.
+
+let lastNominatimCall = 0;
+
+async function throttleNominatim() {
+
+    const now = Date.now();
+    const wait = Math.max(0, 1100 - (now - lastNominatimCall));
+
+    if (wait > 0) {
+        await new Promise(resolve => setTimeout(resolve, wait));
+    }
+
+    lastNominatimCall = Date.now();
+
+}
+
+async function getAddress(lat, lng, attempt = 1) {
 
     try {
+
+        await throttleNominatim();
 
         const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
@@ -328,7 +396,6 @@ async function getAddress(lat, lng) {
             }
         );
 
-
         if (!response.ok) {
 
             throw new Error(
@@ -337,9 +404,7 @@ async function getAddress(lat, lng) {
 
         }
 
-
         const data = await response.json();
-
 
         if (data.display_name) {
 
@@ -347,8 +412,7 @@ async function getAddress(lat, lng) {
 
         }
 
-
-        return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        throw new Error("No display_name in response");
 
     }
 
@@ -359,8 +423,14 @@ async function getAddress(lat, lng) {
             error
         );
 
+        // One retry before giving up — most failures here
+        // are transient rate-limit rejections, not a truly
+        // missing address.
+        if (attempt < 2) {
+            return getAddress(lat, lng, attempt + 1);
+        }
 
-        // Fallback if address lookup fails
+        // Last-resort fallback if address lookup keeps failing
         return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
     }
@@ -430,6 +500,14 @@ function resetMarkers() {
     );
 
 
+    // Hide price details
+    priceDetails.classList.add("hidden");
+    priceAmount.textContent = "--";
+
+
+    checkRideReady();
+
+
     console.log("Map reset");
 
 }
@@ -442,44 +520,7 @@ resetBtn.addEventListener(
 
 
 // ==========================================
-// GET ADDRESS FROM COORDINATES
-// ==========================================
-
-async function getAddress(lat, lng) {
-
-    try {
-
-        const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-            {
-                headers: {
-                    "Accept": "application/json"
-                }
-            }
-        );
-
-        const data = await response.json();
-
-        if (data && data.display_name) {
-            return data.display_name;
-        }
-
-        return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-
-    } catch (error) {
-
-        console.error(
-            "Error getting address:",
-            error
-        );
-
-        return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    }
-}
-
-
-// ==========================================
-// DRAW ACTUAL ROAD ROUTE
+// DRAW ACTUAL ROAD ROUTE + ESTIMATE FARE
 // ==========================================
 
 async function showRoute(pickup, dropoff) {
@@ -533,6 +574,19 @@ async function showRoute(pickup, dropoff) {
                 padding: [30, 30]
             }
         );
+
+
+        // ------------------------------------------
+        // Estimated fare: R15 base + R8.50/km
+        // Adjust these rates to match your pricing.
+        // ------------------------------------------
+
+        const distanceKm = route.distance / 1000;
+        const fare = 15 + distanceKm * 8.5;
+
+        priceAmount.textContent = `R${fare.toFixed(2)}`;
+        priceDetails.classList.remove("hidden");
+
 
     } catch (error) {
 
@@ -705,10 +759,6 @@ requestBtn.addEventListener(
 // LOAD PASSENGER RIDES
 // ==========================================
 
-// ==========================================
-// LOAD PASSENGER RIDES
-// ==========================================
-
 async function loadRides() {
 
     try {
@@ -727,13 +777,14 @@ async function loadRides() {
 
         console.log("RIDES FROM SERVER:", rides);
 
-        // Clear sections
+        // Clear section
         activeRide.innerHTML = "";
-        rideHistory.innerHTML = "";
 
 
         // ------------------------------------------
-        // Separate active and completed rides
+        // Only the active ride is handled on this
+        // page — completed/cancelled rides are shown
+        // on history.html instead.
         // ------------------------------------------
 
         const activeRides = rides.filter(
@@ -741,12 +792,6 @@ async function loadRides() {
                 ride.status === "pending" ||
                 ride.status === "accepted"
         );
-
-        const completedRides = rides.filter(
-            ride =>
-        ride.status === "completed" ||
-        ride.status === "cancelled"
-);
 
 
         // ------------------------------------------
@@ -812,56 +857,13 @@ async function loadRides() {
 
 
         // ------------------------------------------
-        // RIDE HISTORY
-        // ------------------------------------------
-
-        if (completedRides.length === 0) {
-
-            rideHistory.innerHTML = `
-                <p class="no-rides">
-                    No ride history yet.
-                </p>
-            `;
-
-        } else {
-
-            completedRides.forEach(ride => {
-
-                const card =
-                    document.createElement("div");
-
-                card.className = "history-card";
-
-                card.innerHTML = `
-
-                    <span class="status completed">
-                        Completed
-                    </span>
-
-                    <p>
-                        <strong>Pickup</strong><br>
-                        ${ride.pickupAddress || "Address unavailable"}
-                    </p>
-
-                    <p>
-                        <strong>Drop-off</strong><br>
-                        ${ride.dropoffAddress || "Address unavailable"}
-                    </p>
-
-                `;
-
-                rideHistory.appendChild(card);
-
-            });
-
-        }
-
-
-        // ------------------------------------------
         // SHOW RIDES ON MAP
+        // Only plot active rides — plotting every
+        // completed/cancelled ride on every refresh
+        // clutters the map over time.
         // ------------------------------------------
 
-        rides.forEach(ride => {
+        activeRides.forEach(ride => {
 
             addRideToMap(ride);
 
@@ -911,11 +913,6 @@ loadRides();
 // LOGOUT
 // ==========================================
 
-const logoutButton =
-    document.getElementById(
-        "index-logout-btn"
-    );
-
 document.getElementById("index-logout-btn").addEventListener("click", () => {
 
     localStorage.removeItem("token");
@@ -932,6 +929,8 @@ async function searchLocation(query) {
     }
 
     try {
+
+        await throttleNominatim();
 
         const response = await fetch(
             `https://nominatim.openstreetmap.org/search?format=json&` +
@@ -997,12 +996,40 @@ function selectLocation(result) {
     };
 
 
-    if (!selectedPickup) {
+    // Respect whichever box the user is actually
+    // typing into, instead of always filling
+    // pickup first.
+
+    if (clickState === "dropoff") {
+
+        selectedDropoff = location;
+
+        dropoffSearch.value =
+            location.address;
+
+        if (dropoffMarker) {
+            map.removeLayer(dropoffMarker);
+        }
+
+        dropoffMarker =
+            L.marker(
+                [location.lat, location.lng],
+                { icon: redIcon }
+            )
+            .addTo(map)
+            .bindPopup("Drop-off")
+            .openPopup();
+
+    } else {
 
         selectedPickup = location;
 
         pickupSearch.value =
             location.address;
+
+        if (pickupMarker) {
+            map.removeLayer(pickupMarker);
+        }
 
         pickupMarker =
             L.marker(
@@ -1013,21 +1040,9 @@ function selectLocation(result) {
             .bindPopup("Pickup")
             .openPopup();
 
-    } else {
+    }
 
-        selectedDropoff = location;
-
-        dropoffSearch.value =
-            location.address;
-
-        dropoffMarker =
-            L.marker(
-                [location.lat, location.lng],
-                { icon: redIcon }
-            )
-            .addTo(map)
-            .bindPopup("Drop-off")
-            .openPopup();
+    if (selectedPickup && selectedDropoff) {
 
         showRoute(
             selectedPickup,
@@ -1042,15 +1057,25 @@ function selectLocation(result) {
 
 }
 
+// Typing fires an 'input' event per keystroke — searching
+// Nominatim on every single one is what was triggering the
+// rate-limit fallback to raw coordinates. Debounce so it
+// only searches ~350ms after the user stops typing.
+
+let pickupSearchTimer = null;
+let dropoffSearchTimer = null;
+
 pickupSearch.addEventListener(
     "input",
     () => {
 
         selectedPickup = null;
 
-        searchLocation(
-            pickupSearch.value
-        );
+        clearTimeout(pickupSearchTimer);
+
+        pickupSearchTimer = setTimeout(() => {
+            searchLocation(pickupSearch.value);
+        }, 350);
 
     }
 );
@@ -1060,9 +1085,11 @@ dropoffSearch.addEventListener(
 
         selectedDropoff = null;
 
-        searchLocation(
-            dropoffSearch.value
-        );
+        clearTimeout(dropoffSearchTimer);
+
+        dropoffSearchTimer = setTimeout(() => {
+            searchLocation(dropoffSearch.value);
+        }, 350);
 
     }
 );
@@ -1206,17 +1233,20 @@ async function cancelRide(rideId) {
 
     try {
 
-        const token =
-            localStorage.getItem("token");
-
         const response = await fetch(
             `/api/rides/${rideId}/cancel`,
             {
                 method: "PATCH",
 
                 headers: {
-                    "Authorization":
-                        `Bearer ${token}`,
+                    // Matches the header format used by every
+                    // other request in this file. The old code
+                    // sent "Bearer <token>" here only, which
+                    // would fail if the backend expects the
+                    // raw token like the rest of the app does.
+                    // Flip this back to `Bearer ${token}` if
+                    // your backend actually expects that format.
+                    "Authorization": token,
 
                     "Content-Type":
                         "application/json"
@@ -1254,106 +1284,8 @@ async function cancelRide(rideId) {
     }
 }
 
-async function loadRideHistory() {
-
-    try {
-
-        const response =
-            await fetch(
-                "/api/my-rides",
-                {
-                    headers: {
-                        "Authorization": token
-                    }
-                }
-            );
-
-        const rides =
-            await response.json();
-
-
-        rideHistory.innerHTML = "";
-
-
-        const history =
-            rides.filter(
-                ride =>
-                    ride.status === "completed" ||
-                    ride.status === "cancelled"
-            );
-
-
-        if (history.length === 0) {
-
-            rideHistory.innerHTML = `
-                <p class="no-rides">
-                    No ride history yet.
-                </p>
-            `;
-
-            return;
-        }
-
-
-        history.forEach(ride => {
-
-            const card =
-                document.createElement("div");
-
-            card.className =
-                "history-card";
-
-
-            card.innerHTML = `
-
-                <span class="status ${ride.status}">
-                    ${ride.status}
-                </span>
-
-                <div class="history-route">
-
-                    <strong>
-                        ${ride.pickupAddress}
-                    </strong>
-
-                    <span>↓</span>
-
-                    <strong>
-                        ${ride.dropoffAddress}
-                    </strong>
-
-                </div>
-
-                ${
-                    ride.driver
-                    ? `
-                        <small>
-                            Driver: ${ride.driver.name}
-                        </small>
-                    `
-                    : ""
-                }
-
-            `;
-
-            rideHistory.appendChild(card);
-
-        });
-
-    } catch (error) {
-
-        console.error(
-            "History error:",
-            error
-        );
-
-    }
-
-}
-
 setInterval(() => {
 
     loadActiveRide();
-    loadRideHistory();
 
 }, 5000);

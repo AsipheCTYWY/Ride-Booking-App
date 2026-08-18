@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>RideBook Driver - Ride History</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="driver-dash-body history-body">
+
+<div class="history-page">
+
+    <header class="history-header">
+
+        <div>
+            <a href="driver.html" class="back-link">&larr; Back to dashboard</a>
+            <h1>Ride History</h1>
+            <p>Every trip you've completed, with an estimated fare for each.</p>
+        </div>
+
+        <button id="history-logout-btn" class="logout-btn">
+            Logout
+        </button>
+
+    </header>
+
+    <div class="earnings-summary" id="earnings-summary">
+        <span>Total estimated earnings</span>
+        <strong id="earnings-total">R0.00</strong>
+    </div>
+
+    <main>
+
+        <div id="driver-history-full" class="history-list">
+
+            <p class="no-rides">
+                Loading your ride history...
+            </p>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="driver-history.js"></script>
+
+</body>
+
+</html>

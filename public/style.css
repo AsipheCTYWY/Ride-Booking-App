@@ -1176,3 +1176,445 @@ button:hover{
     box-shadow:
         0 0 0 3px rgba(122, 31, 61, 0.12);
 }
+
+/* ==================================================
+   REDESIGN: profile block, price details, and a
+   full-width Active Ride / Ride History row below
+   the map (matches wireframe). These rules are
+   appended last so they win the cascade over the
+   older #sidebar / .passenger-layout definitions
+   above without having to delete legacy code.
+================================================== */
+
+.passenger-body {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.passenger-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.passenger-layout {
+    height: 100vh;
+    min-height: 100vh;
+    flex: none;
+}
+
+.passenger-profile {
+    margin-top: 2px;
+}
+
+/* PRICE DETAILS */
+
+.price-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e4d6cf;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin: 14px 0;
+    color: #5b1836;
+}
+
+.price-details span {
+    font-size: 13px;
+    color: #7a6a63;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.price-details strong {
+    font-size: 20px;
+}
+
+/* ACTIVE RIDE + RIDE HISTORY — full width row */
+
+.rides-overview {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 32px 40px 48px;
+    background: #faf4f1;
+}
+
+.overview-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.06);
+    min-height: 320px;
+    max-height: 460px;
+    overflow-y: auto;
+}
+
+.overview-card h3 {
+    color: #5b1836;
+    margin-bottom: 16px;
+    font-size: 17px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.overview-card #active-ride,
+.overview-card #ride-history {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: inherit;
+}
+
+.overview-card .active-ride-card,
+.overview-card .history-card {
+    background: #f7f1ed;
+    border: 1px solid #e4d6cf;
+    color: #2d2a2a;
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.overview-card .active-ride-card strong,
+.overview-card .history-card strong {
+    color: #5b1836;
+}
+
+.overview-card .no-rides {
+    color: #8a7c74;
+    text-align: left;
+}
+
+@media (max-width: 900px) {
+    .rides-overview {
+        grid-template-columns: 1fr;
+        padding: 24px;
+    }
+}
+
+/* ==================================================
+   FIX: keep sidebar + map + rides row all on one
+   screen, no page-level scroll. The rides row now
+   fills the remaining space and scrolls internally
+   per-card instead of scrolling the whole page.
+================================================== */
+
+.passenger-body {
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.passenger-page {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.passenger-layout {
+    height: 60vh;
+    min-height: 0;
+    flex: 0 0 60vh;
+}
+
+.booking-panel {
+    height: 60vh;
+}
+
+.map-panel {
+    height: 60vh;
+}
+
+/* Older #map rule had min-height:100vh, which forced
+   the map taller than its 60vh parent and caused the
+   page scroll. Absolute + inset:0 already fills the
+   parent, so min-height shouldn't be fighting it. */
+#map {
+    min-height: 0;
+}
+
+.rides-overview {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 18px 40px;
+}
+
+.overview-card {
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+}
+
+@media (max-width: 900px) {
+    .passenger-body {
+        height: auto;
+        overflow-y: auto;
+    }
+
+    .passenger-page {
+        height: auto;
+    }
+
+    .passenger-layout {
+        flex: none;
+        height: auto;
+    }
+
+    .rides-overview {
+        flex: none;
+    }
+}
+
+/* ==================================================
+   REVERT: Active Ride is back in the sidebar, Ride
+   History moved to its own page (history.html), so
+   the sidebar/map go back to filling the full screen.
+   Appended last so it overrides the split-screen rules
+   above without deleting them.
+================================================== */
+
+.passenger-body {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.passenger-page {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.passenger-layout {
+    height: 100vh;
+    flex: none;
+}
+
+.booking-panel {
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.map-panel {
+    height: 100vh;
+}
+
+#map {
+    min-height: 0;
+    height: 100%;
+}
+
+.view-history-btn {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 20px;
+}
+
+@media (max-width: 900px) {
+    .passenger-layout {
+        height: auto;
+    }
+
+    .booking-panel {
+        height: auto;
+        max-height: 55vh;
+    }
+
+    .map-panel,
+    #map {
+        height: 55vh;
+    }
+}
+
+/* ==================================================
+   RIDE HISTORY PAGE (history.html)
+================================================== */
+
+.history-body {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+    background: #faf4f1;
+}
+
+.history-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 50px 30px 60px;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 34px;
+}
+
+.history-header .back-link {
+    display: inline-block;
+    color: #5b1836;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.history-header .back-link:hover {
+    text-decoration: underline;
+}
+
+.history-header h1 {
+    color: #5b1836;
+    font-size: 32px;
+}
+
+.history-header p {
+    color: #7a6a63;
+    margin-top: 6px;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.history-list .history-card {
+    background: #fff;
+    border: 1px solid #e4d6cf;
+    color: #2d2a2a;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.05);
+}
+
+.history-list .history-card strong {
+    color: #5b1836;
+}
+
+.history-list .no-rides {
+    color: #8a7c74;
+    text-align: left;
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  background:#faf4f1;
+  color:#2b2b2b;
+}
+
+button{
+  cursor:pointer;
+  border:none;
+  border-radius:10px;
+  transition:.3s;
+  font-weight:600;
+}
+
+button:hover{
+  transform:translateY(-2px);
+}
+
+.passenger-layout {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#sidebar{
+  width:340px;
+  min-width: 340px;
+  height: 100vh;
+  background:#5b1836;
+  box-sizing: border-box;
+  color:#fff;
+  padding:25px;
+  overflow-y:auto;
+}
+
+#sidebar h1{
+  color:#efd6c9;
+  margin-bottom:10px;
+}
+
+#sidebar h2{
+  color:#efd6c9;
+  margin:25px 0 10px;
+  font-size:16px;
+  text-transform:uppercase;
+}
+
+.instruction{
+  color:#f7e8e0;
+  margin-bottom:18px;
+}
+
+#ride-controls{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+
+.hidden{
+  display:none!important;
+}
+
+#request-btn{
+  flex:1;
+  background:#7b214f;
+  color:#fff;
+  padding:12px;
+}
+
+#request-btn:hover{
+  background:#5b1836;
+}
+
+#reset-btn{
+  background:#d8b4a0;
+  color:#5b1836;
+  padding:12px;
+}
+
+#rides-list{
+  list-style:none;
+}
+
+#rides-list li{
+  background:#fff;
+  color:#333;
+  margin-bottom:10px;
+  padding:12px;
+  border-radius:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);
+}
+
+.status{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:12px;
+  margin-bottom:8px;
+  color:#fff;
+}
+
+.pending{background:#c08b00;}
+.accepted{background:#2f9e44;}
+.completed{background:#555;}
+
+
+/* Driver Dashboard */
+
+#driver-dashboard{
+  max-width:900px;
+  margin:40px auto;
+  padding:30px;
+}
