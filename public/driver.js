@@ -808,16 +808,19 @@ async function renderHistoryPanel() {
             const timeLabel = ts
                 ? new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                 : "";
-            html += `
-                <div class="drv-history-item">
-                    <div class="drv-history-item-avatar">${passengerAvatarLetter(ride)}</div>
-                    <div class="drv-history-item-info">
-                        <strong>${addressTitle(ride.pickupAddress)} &rarr; ${addressTitle(ride.dropoffAddress)}</strong>
-                        <small>${timeLabel ? `${timeLabel} · ` : ""}${ride.passenger?.name || "Passenger"} · ${km.toFixed(1)} km</small>
-                    </div>
-                    <span class="drv-history-item-fare">${formatRand(fare)}</span>
-                </div>
-            `;
+            // Inside renderHistoryPanel(), update the history item HTML:
+
+         html += `
+            <div class="drv-history-item clickable" onclick='openDriverRideDetail(${JSON.stringify(ride).replace(/"/g, '&quot;')})'>
+            <div class="drv-history-item-avatar">${passengerAvatarLetter(ride)}</div>
+            <div class="drv-history-item-info">
+                <strong>${addressTitle(ride.pickupAddress)} &rarr; ${addressTitle(ride.dropoffAddress)}</strong>
+                <small>${timeLabel ? `${timeLabel} · ` : ""}${ride.passenger?.name || "Passenger"} · ${km.toFixed(1)} km</small>
+            </div>
+            <span class="drv-history-item-fare">${formatRand(fare)}</span>
+            <span class="drv-chevron">›</span>
+            </div>
+         `;
         }
     }
     historyListEl.innerHTML = html;
@@ -858,6 +861,107 @@ setInterval(() => {
     loadMyRides();
     loadEarnings();
 }, 5000);
+
+// ==========================================
+// RIDE DETAIL MODAL - DRIVER
+// ==========================================
+
+const drvDetailOverlay = document.getElementById("drv-ride-detail-overlay");
+const drvDetailBody = document.getElementById("drv-detail-body");
+const drvDetailTitle = document.getElementById("drv-detail-title");
+const drvDetailCloseBtn = document.getElementById("drv-detail-close-btn");
+
+function openDriverRideDetail(ride) {
+    drvDetailTitle.textContent = "Ride Details";
+    
+    const statusColors = {
+        'pending': 'pending',
+        'accepted': 'accepted',
+        'completed': 'completed',
+        'cancelled': 'cancelled'
+    };
+    
+    const statusLabel = ride.status.charAt(0).toUpperCase() + ride.status.slice(1);
+    
+    const createdAt = new Date(ride.createdAt).toLocaleString('en-ZA', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    const updatedAt = new Date(ride.updatedAt).toLocaleString('en-ZA', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // Calculate fare
+    let fareDisplay = '--';
+    if (ride.pickup && ride.dropoff) {
+        const km = haversineKm(ride.pickup, ride.dropoff);
+        const fare = FARE_BASE + km * FARE_PER_KM;
+        fareDisplay = formatRand(fare);
+    }
+    
+    drvDetailBody.innerHTML = `
+        <div class="detail-fare-large">${fareDisplay}</div>
+        
+        <div class="detail-section-title">Trip Status</div>
+        <div class="detail-row">
+            <span class="detail-label">Status</span>
+            <span class="detail-value">
+                <span class="status-pill ${statusColors[ride.status] || 'pending'}">${statusLabel}</span>
+            </span>
+        </div>
+        
+        <div class="detail-section-title">Route</div>
+        <div class="detail-address">
+            <strong>Pickup</strong><br>
+            ${ride.pickupAddress || 'Address unavailable'}
+        </div>
+        <div class="detail-address dropoff">
+            <strong>Drop-off</strong><br>
+            ${ride.dropoffAddress || 'Address unavailable'}
+        </div>
+        
+        <div class="detail-section-title">Passenger</div>
+        <div class="detail-row">
+            <span class="detail-label">Name</span>
+            <span class="detail-value">${ride.passenger?.name || 'Unknown'}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Email</span>
+            <span class="detail-value">${ride.passenger?.email || 'No email'}</span>
+        </div>
+        
+        <div class="detail-section-title">Timeline</div>
+        <div class="detail-row">
+            <span class="detail-label">Requested</span>
+            <span class="detail-value">${createdAt}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Last Updated</span>
+            <span class="detail-value">${updatedAt}</span>
+        </div>
+    `;
+    
+    drvDetailOverlay.hidden = false;
+}
+
+// Close modal
+drvDetailCloseBtn.addEventListener("click", () => {
+    drvDetailOverlay.hidden = true;
+});
+
+drvDetailOverlay.addEventListener("click", (e) => {
+    if (e.target === drvDetailOverlay) {
+        drvDetailOverlay.hidden = true;
+    }
+});
 
 
 // ==========================================

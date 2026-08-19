@@ -4955,3 +4955,231 @@ button:hover{
     border-right: 5px solid transparent;
     border-top: 7px solid #800020;
 }
+
+/* ==========================================
+   RIDE DETAIL MODAL
+========================================== */
+
+.psg-ride-detail-overlay,
+.drv-ride-detail-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    animation: psg-fade-in .2s ease;
+}
+
+.psg-ride-detail-overlay[hidden],
+.drv-ride-detail-overlay[hidden] {
+    display: none;
+}
+
+.psg-ride-detail-modal,
+.drv-ride-detail-modal {
+    width: 480px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 60px);
+    background: var(--psg-card);
+    border: 1px solid var(--psg-border);
+    border-radius: var(--psg-radius);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    animation: psg-card-in .25s ease;
+}
+
+.psg-ride-detail-header,
+.drv-ride-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid var(--psg-border);
+}
+
+.psg-ride-detail-header h2,
+.drv-ride-detail-header h2 {
+    font-size: 20px;
+    margin: 0;
+    color: var(--psg-text);
+}
+
+.psg-ride-detail-header .psg-close-btn,
+.drv-ride-detail-header .drv-close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--psg-card-alt);
+    border: 1px solid var(--psg-border);
+    color: var(--psg-text-dim);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.psg-ride-detail-header .psg-close-btn:hover,
+.drv-ride-detail-header .drv-close-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--psg-red);
+}
+
+.psg-ride-detail-body,
+.drv-ride-detail-body {
+    padding: 20px 24px 24px;
+    overflow-y: auto;
+    max-height: calc(100vh - 160px);
+}
+
+.psg-ride-detail-body .detail-row,
+.drv-ride-detail-body .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--psg-border);
+}
+
+.psg-ride-detail-body .detail-row:last-child,
+.drv-ride-detail-body .detail-row:last-child {
+    border-bottom: none;
+}
+
+.psg-ride-detail-body .detail-label,
+.drv-ride-detail-body .detail-label {
+    color: var(--psg-text-dim);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.psg-ride-detail-body .detail-value,
+.drv-ride-detail-body .detail-value {
+    color: var(--psg-text);
+    font-size: 13px;
+    text-align: right;
+    max-width: 60%;
+    word-break: break-word;
+}
+
+.psg-ride-detail-body .detail-value .status-pill {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.psg-ride-detail-body .detail-value .status-pill.completed {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.psg-ride-detail-body .detail-value .status-pill.cancelled {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.psg-ride-detail-body .detail-value .status-pill.pending {
+    background: rgba(242, 183, 5, 0.15);
+    color: #f2b705;
+}
+
+.psg-ride-detail-body .detail-value .status-pill.accepted {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.psg-ride-detail-body .detail-section-title,
+.drv-ride-detail-body .detail-section-title {
+    color: var(--psg-text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 16px 0 8px;
+    font-weight: 600;
+}
+
+.psg-ride-detail-body .detail-address,
+.drv-ride-detail-body .detail-address {
+    color: var(--psg-text);
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 6px 0 6px 16px;
+    border-left: 3px solid var(--psg-primary);
+    margin-bottom: 4px;
+}
+
+.psg-ride-detail-body .detail-address.dropoff,
+.drv-ride-detail-body .detail-address.dropoff {
+    border-left-color: var(--psg-secondary);
+}
+
+.psg-ride-detail-body .detail-fare-large,
+.drv-ride-detail-body .detail-fare-large {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--psg-gold);
+    text-align: center;
+    padding: 12px 0;
+}
+
+/* Driver detail modal - same styles, different prefix */
+.drv-ride-detail-modal {
+    background: var(--drv-card);
+    border: 1px solid var(--drv-border);
+}
+
+.drv-ride-detail-header h2 {
+    color: var(--drv-text);
+}
+
+.drv-ride-detail-body .detail-label {
+    color: var(--drv-text-dim);
+}
+
+.drv-ride-detail-body .detail-value {
+    color: var(--drv-text);
+}
+
+.drv-ride-detail-body .detail-address {
+    border-left-color: var(--drv-primary);
+}
+
+.drv-ride-detail-body .detail-address.dropoff {
+    border-left-color: var(--drv-secondary);
+}
+
+.drv-ride-detail-body .detail-fare-large {
+    color: var(--drv-gold);
+}
+
+/* Clickable history items */
+.psg-history-item.clickable,
+.drv-history-item.clickable {
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.psg-history-item.clickable:hover {
+    background: var(--psg-card-alt);
+}
+
+.drv-history-item.clickable:hover {
+    background: var(--drv-card-alt);
+}
+
+.psg-history-item.clickable .psg-chevron,
+.drv-history-item.clickable .drv-chevron {
+    opacity: 0.3;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.psg-history-item.clickable:hover .psg-chevron,
+.drv-history-item.clickable:hover .drv-chevron {
+    opacity: 1;
+    transform: translateX(4px);
+}

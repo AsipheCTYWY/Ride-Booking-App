@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>RideBook Driver</title>
-<link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -118,6 +118,22 @@
 
         </div>
 
+    </div>
+
+    <!-- ==========================================
+         RIDE DETAIL MODAL - DRIVER
+    ========================================== -->
+
+    <div class="drv-ride-detail-overlay" id="drv-ride-detail-overlay" hidden>
+        <div class="drv-ride-detail-modal">
+            <div class="drv-ride-detail-header">
+                <h2 id="drv-detail-title">Ride Details</h2>
+                <button class="drv-close-btn" id="drv-detail-close-btn">✕</button>
+            </div>
+            <div class="drv-ride-detail-body" id="drv-detail-body">
+                <!-- Dynamic content -->
+            </div>
+        </div>
     </div>
 
     <div class="drv-toast" id="drv-toast" hidden></div>

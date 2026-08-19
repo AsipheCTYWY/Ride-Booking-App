@@ -813,14 +813,17 @@ async function loadRideHistory() {
             const { fare } = estimateFareFromRide(ride);
             const ts = ride.updatedAt || ride.createdAt;
             const timeLabel = ts ? new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+            const statusIcon = ride.status === "completed" ? "✅" : "❌";
+            
             html += `
-                <div class="psg-history-item">
+                <div class="psg-history-item clickable" onclick="openPassengerRideDetail(${JSON.stringify(ride).replace(/"/g, '&quot;')})">
                     <div class="psg-history-item-avatar">${ride.passenger?.name?.charAt(0)?.toUpperCase() || "P"}</div>
                     <div class="psg-history-item-info">
                         <strong>${ride.pickupAddress?.split(",")[0] || "Pickup"} → ${ride.dropoffAddress?.split(",")[0] || "Drop-off"}</strong>
-                        <small>${timeLabel ? `${timeLabel} · ` : ""}${ride.status}</small>
+                        <small>${timeLabel ? `${timeLabel} · ` : ""}${statusIcon} ${ride.status}</small>
                     </div>
                     <span class="psg-history-item-fare">${formatRand(fare)}</span>
+                    <span class="psg-chevron">›</span>
                 </div>
             `;
         });
@@ -871,4 +874,115 @@ document.getElementById("passenger-logout-btn").addEventListener("click", () => 
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     window.location.href = "/login.html";
+});
+// ==========================================
+// RIDE DETAIL MODAL - PASSENGER
+// ==========================================
+
+const psgDetailOverlay = document.getElementById("psg-ride-detail-overlay");
+const psgDetailBody = document.getElementById("psg-detail-body");
+const psgDetailTitle = document.getElementById("psg-detail-title");
+const psgDetailCloseBtn = document.getElementById("psg-detail-close-btn");
+
+function openPassengerRideDetail(ride) {
+    psgDetailTitle.textContent = "Ride Details";
+    
+    const statusColors = {
+        'pending': 'pending',
+        'accepted': 'accepted',
+        'completed': 'completed',
+        'cancelled': 'cancelled'
+    };
+    
+    const statusLabel = ride.status.charAt(0).toUpperCase() + ride.status.slice(1);
+    
+    let driverInfo = 'No driver assigned';
+    if (ride.driver) {
+        driverInfo = `${ride.driver.name} (${ride.driver.email || 'No email'})`;
+    }
+    
+    const createdAt = new Date(ride.createdAt).toLocaleString('en-ZA', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    const updatedAt = new Date(ride.updatedAt).toLocaleString('en-ZA', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // Calculate fare
+    let fareDisplay = '--';
+    if (ride.pickup && ride.dropoff) {
+        const km = haversineKm(ride.pickup, ride.dropoff);
+        const fare = FARE_BASE + km * FARE_PER_KM;
+        fareDisplay = formatRand(fare);
+    }
+    
+    psgDetailBody.innerHTML = `
+        <div class="detail-fare-large">${fareDisplay}</div>
+        
+        <div class="detail-section-title">Trip Status</div>
+        <div class="detail-row">
+            <span class="detail-label">Status</span>
+            <span class="detail-value">
+                <span class="status-pill ${statusColors[ride.status] || 'pending'}">${statusLabel}</span>
+            </span>
+        </div>
+        
+        <div class="detail-section-title">Route</div>
+        <div class="detail-address">
+            <strong>Pickup</strong><br>
+            ${ride.pickupAddress || 'Address unavailable'}
+        </div>
+        <div class="detail-address dropoff">
+            <strong>Drop-off</strong><br>
+            ${ride.dropoffAddress || 'Address unavailable'}
+        </div>
+        
+        <div class="detail-section-title">Passenger</div>
+        <div class="detail-row">
+            <span class="detail-label">Name</span>
+            <span class="detail-value">${ride.passenger?.name || 'Unknown'}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Email</span>
+            <span class="detail-value">${ride.passenger?.email || 'No email'}</span>
+        </div>
+        
+        <div class="detail-section-title">Driver</div>
+        <div class="detail-row">
+            <span class="detail-label">Assigned</span>
+            <span class="detail-value">${driverInfo}</span>
+        </div>
+        
+        <div class="detail-section-title">Timeline</div>
+        <div class="detail-row">
+            <span class="detail-label">Requested</span>
+            <span class="detail-value">${createdAt}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Last Updated</span>
+            <span class="detail-value">${updatedAt}</span>
+        </div>
+    `;
+    
+    psgDetailOverlay.hidden = false;
+}
+
+// Close modal
+psgDetailCloseBtn.addEventListener("click", () => {
+    psgDetailOverlay.hidden = true;
+});
+
+psgDetailOverlay.addEventListener("click", (e) => {
+    if (e.target === psgDetailOverlay) {
+        psgDetailOverlay.hidden = true;
+    }
 });
