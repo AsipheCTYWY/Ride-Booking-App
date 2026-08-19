@@ -88,6 +88,31 @@ app.post('/api/rides', auth, async (req, res) => {
     }
 
 });
+app.get("/api/me", auth, async (req, res) => {
+
+    try {
+
+        const user = await User.findById(req.user.userId).select("name email role");
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.json(user);
+
+    } catch (err) {
+
+        console.error("Error loading profile:", err);
+
+        res.status(500).json({
+            error: err.message
+        });
+
+    }
+
+});
 
 app.get('/api/my-rides', auth, async (req, res) => {
   try {
@@ -237,23 +262,7 @@ app.patch("/api/rides/:id/cancel", auth, async (req, res) => {
 
     try {
 
-        console.log("CANCEL REQUEST RECEIVED");
-        console.log("Ride ID:", req.params.id);
-        console.log("User:", req.user);
-
-        // Only passengers can cancel through this endpoint
-        if (req.user.role !== "passenger") {
-
-            return res.status(403).json({
-                message: "Only passengers can cancel rides"
-            });
-
-        }
-
-        const ride = await Ride.findOne({
-            _id: req.params.id,
-            passenger: req.user.userId
-        });
+        const ride = await Ride.findById(req.params.id);
 
         if (!ride) {
 
@@ -263,25 +272,78 @@ app.patch("/api/rides/:id/cancel", auth, async (req, res) => {
 
         }
 
-        // Don't allow cancellation of completed/cancelled rides
-        if (
-            ride.status === "completed" ||
-            ride.status === "cancelled"
-        ) {
+        // Passengers can cancel their own ride at any point before
+        // it's completed.
+        if (req.user.role === "passenger") {
 
-            return res.status(400).json({
-                message: "This ride cannot be cancelled"
+            if (String(ride.passenger) !== req.user.userId) {
+
+                return res.status(404).json({
+                    message: "Ride not found"
+                });
+
+            }
+
+            if (
+                ride.status === "completed" ||
+                ride.status === "cancelled"
+            ) {
+
+                return res.status(400).json({
+                    message: "This ride cannot be cancelled"
+                });
+
+            }
+
+            ride.status = "cancelled";
+
+            await ride.save();
+
+            return res.json({
+                message: "Ride cancelled successfully",
+                ride
             });
 
         }
 
-        ride.status = "cancelled";
+        // Drivers can back out of a ride they've accepted — it goes
+        // back to "pending" so other nearby drivers can pick it up,
+        // rather than killing the trip for the passenger.
+        if (req.user.role === "driver") {
 
-        await ride.save();
+            if (
+                !ride.driver ||
+                String(ride.driver) !== req.user.userId
+            ) {
 
-        res.json({
-            message: "Ride cancelled successfully",
-            ride
+                return res.status(404).json({
+                    message: "Ride not found"
+                });
+
+            }
+
+            if (ride.status !== "accepted") {
+
+                return res.status(400).json({
+                    message: "This ride cannot be cancelled"
+                });
+
+            }
+
+            ride.status = "pending";
+            ride.driver = null;
+
+            await ride.save();
+
+            return res.json({
+                message: "Trip cancelled",
+                ride
+            });
+
+        }
+
+        return res.status(403).json({
+            message: "Not authorized to cancel rides"
         });
 
     } catch (err) {

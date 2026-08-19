@@ -13,142 +13,116 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="driver-dash-body">
+<body class="drv-body">
 
-<div class="driver-layout">
+<div class="drv-app">
 
-    <!-- =====================================
-         DRIVER PANEL (sidebar)
-    ====================================== -->
+    <div id="map" class="drv-map"></div>
 
-    <aside class="driver-panel">
+    <div class="drv-map-offline-overlay" id="map-offline-overlay">
+        <div class="drv-offline-icon">⏻</div>
+        <strong>You're offline</strong>
+        <span>Go online to receive trip requests</span>
+        <button class="drv-btn-primary drv-go-online-btn">Go online</button>
+    </div>
 
-        <!-- PROFILE + LOGOUT -->
+    <header class="drv-topbar">
 
-        <div class="driver-profile-row">
-
-            <div class="driver-profile">
-
-                <div class="profile-avatar" id="driver-avatar">?</div>
-
-                <div class="profile-info">
-                    <strong id="driver-name">Loading...</strong>
-                    <small id="driver-meta"></small>
-                </div>
-
+        <div class="drv-profile">
+            <div class="drv-avatar" id="driver-avatar">?</div>
+            <div class="drv-profile-info">
+                <strong id="driver-name">Loading...</strong>
+                <small id="driver-meta"></small>
             </div>
-
-            <button id="driver-logout-btn" class="logout-btn">
-                Logout
-            </button>
-
         </div>
 
+        <div class="drv-topbar-right">
 
-        <!-- EARNINGS + ONLINE TOGGLE -->
-
-        <div class="driver-status-row">
-
-            <div class="earnings-badge">
-                <span>Today</span>
+            <div class="drv-earnings-pill">
                 <strong id="earnings-today">R0.00</strong>
+                <small>today</small>
             </div>
 
-            <label class="online-toggle">
-                <input type="checkbox" id="online-toggle" checked>
-                <span class="toggle-track">
-                    <span class="toggle-thumb"></span>
+            <label class="drv-toggle">
+                <input type="checkbox" id="online-toggle">
+                <span class="drv-toggle-track">
+                    <span class="drv-toggle-thumb"></span>
                 </span>
-                <span class="toggle-label" id="online-label">Online</span>
+                <span class="drv-toggle-label" id="online-label">Offline</span>
             </label>
 
+            <button id="driver-logout-btn" class="drv-icon-btn" title="Logout">⏻</button>
+
         </div>
 
+    </header>
 
-        <!-- LOCATION -->
+    <div class="drv-location-chip">
+        <span class="drv-location-dot"></span>
+        <span id="driver-location-label">Locating you…</span>
+    </div>
 
-        <div class="location-label">
-            <span class="location-dot"></span>
-            <span id="driver-location-label">Locating you…</span>
+    <section class="drv-sheet">
+
+        <div class="drv-sheet-handle"></div>
+
+        <div class="drv-sheet-header">
+            <div class="drv-sheet-title-row">
+                <h2 id="sheet-title">Offline</h2>
+                <span class="drv-count-badge" id="available-count" hidden>0</span>
+            </div>
+            <div class="drv-rate-badge" id="rate-badge">R15.00 base + R8.50/km</div>
         </div>
 
+        <div class="drv-sheet-body" id="sheet-body">
+            <p class="drv-empty">Loading…</p>
+        </div>
 
-        <!-- =====================================
-             AVAILABLE TRIPS
-        ====================================== -->
-
-        <section class="driver-section">
-
-            <div class="driver-section-heading">
-                <h3>Available Trips</h3>
-                <span class="count-badge" id="available-count">0</span>
-            </div>
-
-            <div class="rate-badge" id="rate-badge">
-                R15.00 base + R8.50/km
-            </div>
-
-            <div id="available-rides">
-                <p class="no-rides">Loading trips…</p>
-            </div>
-
-        </section>
-
-
-        <!-- =====================================
-             MY ACTIVE RIDE(S)
-        ====================================== -->
-
-        <section class="driver-section">
-
-            <h3>My Active Ride</h3>
-
-            <div id="my-rides">
-                <p class="no-rides">No active ride.</p>
-            </div>
-
-        </section>
-
-
-        <!-- =====================================
-             RIDE HISTORY LINK
-        ====================================== -->
-
-        <a href="driver-history.html" class="ride-history-link">
-
-            <span class="history-icon">🕓</span>
-
-            <span class="history-link-text">
-                <strong>Ride History</strong>
+        <button class="drv-history-row" id="open-history-btn">
+            <span class="drv-history-icon">🕓</span>
+            <span class="drv-history-text">
+                <strong>Ride history</strong>
                 <small id="history-summary">View your completed trips</small>
             </span>
+            <span class="drv-chevron">›</span>
+        </button>
 
-            <span class="chevron">›</span>
+    </section>
 
-        </a>
+    <div class="drv-history-overlay" id="history-overlay" hidden>
 
-    </aside>
+        <div class="drv-history-panel">
 
+            <div class="drv-history-panel-header">
+                <div>
+                    <h2>Ride history</h2>
+                    <p id="history-panel-subtitle">0 trips · 0.0 km driven</p>
+                </div>
+                <button class="drv-close-btn" id="close-history-btn">✕</button>
+            </div>
 
-    <!-- =====================================
-         MAP
-    ====================================== -->
+            <div class="drv-history-stats">
+                <div class="drv-stat-box">
+                    <span>EARNED TODAY</span>
+                    <strong id="stat-earned-today">R0.00</strong>
+                </div>
+                <div class="drv-stat-box">
+                    <span>TRIPS TODAY</span>
+                    <strong id="stat-trips-today">0</strong>
+                </div>
+            </div>
 
-    <main class="map-panel">
+            <div class="drv-history-list" id="history-list">
+                <p class="drv-empty">Loading…</p>
+            </div>
 
-        <div class="map-heading">
-            <span>📍</span>
-            <span id="map-heading-text">Johannesburg</span>
         </div>
 
-        <div id="map"></div>
+    </div>
 
-    </main>
+    <div class="drv-toast" id="drv-toast" hidden></div>
 
 </div>
-
-
-<!-- LEAFLET -->
 
 <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
