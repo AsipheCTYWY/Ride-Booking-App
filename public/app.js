@@ -282,6 +282,40 @@ async function showRoute(pickup, dropoff) {
     }
 }
 
+// ==========================================
+// CALCULATE FARE - MATCHES DRIVER SIDE
+// ==========================================
+
+async function calculateFare(pickup, dropoff) {
+    try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${pickup.lng},${pickup.lat};${dropoff.lng},${dropoff.lat}?overview=false`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.code === "Ok" && data.routes.length > 0) {
+            const distanceKm = data.routes[0].distance / 1000;
+            return {
+                km: distanceKm,
+                fare: FARE_BASE + distanceKm * FARE_PER_KM
+            };
+        }
+        
+        // Fallback to Haversine
+        const km = haversineKm(pickup, dropoff);
+        return {
+            km: km,
+            fare: FARE_BASE + km * FARE_PER_KM
+        };
+        
+    } catch (error) {
+        console.error("OSRM route error, using fallback:", error);
+        const km = haversineKm(pickup, dropoff);
+        return {
+            km: km,
+            fare: FARE_BASE + km * FARE_PER_KM
+        };
+    }
+}
 
 // ==========================================
 // LOCATION SEARCH
@@ -456,6 +490,13 @@ requestBtn.addEventListener("click", async function () {
 // LOAD ACTIVE RIDE
 // ==========================================
 
+// ==========================================
+// LOAD ACTIVE RIDE
+// ==========================================
+
+// Keep track of driver marker
+let driverLocationMarker = null;
+
 async function loadActiveRide() {
     try {
         const response = await fetch("/api/passenger-active-ride", {
@@ -467,32 +508,113 @@ async function loadActiveRide() {
             activeRide.innerHTML = `<p class="psg-empty-state">No active ride.</p>`;
             updateRideStatus("Idle", "#6d7d73");
             requestBtn.disabled = !(selectedPickup && selectedDropoff);
+            
+            // Remove driver marker if no active ride
+            if (driverLocationMarker) {
+                map.removeLayer(driverLocationMarker);
+                driverLocationMarker = null;
+            }
             return;
         }
 
         requestBtn.disabled = true;
         updateRideStatus(ride.status, ride.status === "accepted" ? "#22c55e" : "#f2b705");
 
-        let driverHTML = ride.driver ? `
-            <div class="psg-driver-info">
-                <strong>Driver</strong>
-                <p>${ride.driver.name}</p>
-                <small>${ride.driver.email || ""}</small>
-            </div>
-        ` : `<p class="psg-waiting">Waiting for a driver...</p>`;
+        // Calculate fare for the ride
+        let fareDisplay = '';
+        let fareAmount = '--';
+        
+        if (ride.pickup && ride.dropoff) {
+            try {
+                const fareData = await calculateFare(ride.pickup, ride.dropoff);
+                fareAmount = formatRand(fareData.fare);
+                fareDisplay = `
+                    <div class="psg-fare-display">
+                        <span>Estimated Fare</span>
+                        <strong>${fareAmount}</strong>
+                    </div>
+                `;
+            } catch (error) {
+                console.error("Error calculating fare:", error);
+                const km = haversineKm(ride.pickup, ride.dropoff);
+                const fare = FARE_BASE + km * FARE_PER_KM;
+                fareAmount = formatRand(fare);
+                fareDisplay = `
+                    <div class="psg-fare-display">
+                        <span>Estimated Fare</span>
+                        <strong>${fareAmount}</strong>
+                    </div>
+                `;
+            }
+        }
 
+        // DRIVER INFO - Always show when driver is assigned
+        let driverHTML = '';
+        if (ride.driver) {
+            driverHTML = `
+                <div class="psg-driver-info">
+                    <div class="psg-driver-row">
+                        <div class="psg-driver-avatar-small">${ride.driver.name?.charAt(0)?.toUpperCase() || "D"}</div>
+                        <div class="psg-driver-details">
+                            <strong>${ride.driver.name || "Driver"}</strong>
+                            <small>${ride.driver.email || ""}</small>
+                        </div>
+                        <span class="psg-driver-status">● Online</span>
+                    </div>
+                </div>
+            `;
+            
+            // If ride is accepted, show driver on map
+            if (ride.status === "accepted") {
+                // Try to get driver's last known location from the ride
+                // The backend doesn't store driver location, so we'll use the pickup location
+                // as a placeholder until the driver updates their location
+                if (ride.pickup) {
+                    showDriverOnMap(ride.pickup, ride.driver.name);
+                }
+            }
+        } else if (ride.status === "pending") {
+            driverHTML = `<p class="psg-waiting">⏳ Waiting for a driver...</p>`;
+            // Remove driver marker if no driver assigned
+            if (driverLocationMarker) {
+                map.removeLayer(driverLocationMarker);
+                driverLocationMarker = null;
+            }
+        }
+
+        // Cancel button - only show for pending rides
         let cancelBtn = ride.status === "pending" ? `
             <button class="psg-cancel-btn" onclick="cancelRide('${ride._id}')">Cancel Ride</button>
         ` : '';
 
+        // Status message
+        let statusMessage = '';
+        if (ride.status === "pending") {
+            statusMessage = `<p class="psg-status-message">⏳ Looking for a driver near you...</p>`;
+        } else if (ride.status === "accepted") {
+            statusMessage = `<p class="psg-status-message accepted">✅ Driver is on the way!</p>`;
+        }
+
         activeRide.innerHTML = `
             <div class="psg-active-card">
-                <span class="psg-status-pill ${ride.status}">${ride.status}</span>
+                <span class="psg-status-pill ${ride.status}">${ride.status.toUpperCase()}</span>
+                ${statusMessage}
+                ${fareDisplay}
                 <div class="psg-route-info">
-                    <strong>Pickup</strong>
-                    <p>${ride.pickupAddress || "Address unavailable"}</p>
-                    <strong>Drop-off</strong>
-                    <p>${ride.dropoffAddress || "Address unavailable"}</p>
+                    <div class="psg-route-row">
+                        <span class="psg-route-dot pickup-dot"></span>
+                        <div>
+                            <strong>Pickup</strong>
+                            <p>${ride.pickupAddress || "Address unavailable"}</p>
+                        </div>
+                    </div>
+                    <div class="psg-route-row">
+                        <span class="psg-route-dot dropoff-dot"></span>
+                        <div>
+                            <strong>Drop-off</strong>
+                            <p>${ride.dropoffAddress || "Address unavailable"}</p>
+                        </div>
+                    </div>
                 </div>
                 ${driverHTML}
                 ${cancelBtn}
@@ -502,6 +624,131 @@ async function loadActiveRide() {
     } catch (error) {
         console.error("Error loading active ride:", error);
     }
+}
+
+// ==========================================
+// SHOW DRIVER ON MAP
+// ==========================================
+
+// Driver car icon
+const driverCarIcon = L.divIcon({
+    className: "psg-driver-car-icon",
+    html: `
+        <div style="
+            position: relative;
+            width: 32px;
+            height: 32px;
+        ">
+            <div style="
+                width: 20px;
+                height: 20px;
+                background: #800020;
+                border-radius: 50%;
+                border: 3px solid #d8b4a0;
+                box-shadow: 0 0 0 5px rgba(128, 0, 32, 0.25), 0 4px 12px rgba(0,0,0,0.3);
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            "></div>
+            <div style="
+                position: absolute;
+                bottom: -6px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 0;
+                height: 0;
+                border-left: 6px solid transparent;
+                border-right: 6px solid transparent;
+                border-top: 8px solid #800020;
+            "></div>
+        </div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
+});
+
+function showDriverOnMap(location, driverName) {
+    // Remove existing driver marker
+    if (driverLocationMarker) {
+        map.removeLayer(driverLocationMarker);
+        driverLocationMarker = null;
+    }
+
+    // Create new driver marker
+    driverLocationMarker = L.marker(
+        [location.lat, location.lng],
+        { 
+            icon: driverCarIcon,
+            zIndexOffset: 1000
+        }
+    )
+    .addTo(map)
+    .bindPopup(`
+        <strong>🚗 ${driverName || "Driver"}</strong><br>
+        <small>Heading to pickup location</small>
+    `)
+    .openPopup();
+
+    // Zoom to show both driver and pickup/dropoff
+    const bounds = L.latLngBounds([
+        [location.lat, location.lng],
+        [selectedPickup?.lat || location.lat, selectedPickup?.lng || location.lng]
+    ]);
+    map.fitBounds(bounds, { padding: [50, 50] });
+}
+
+// ==========================================
+// SIMULATE DRIVER MOVEMENT (FOR TESTING)
+// ==========================================
+
+let driverMoveInterval = null;
+
+function startDriverSimulation(targetLocation, driverName) {
+    // Clear any existing interval
+    if (driverMoveInterval) {
+        clearInterval(driverMoveInterval);
+        driverMoveInterval = null;
+    }
+
+    // Start with pickup location slightly offset
+    let currentLat = targetLocation.lat + 0.01;
+    let currentLng = targetLocation.lng + 0.01;
+    const steps = 20;
+    let step = 0;
+
+    driverMoveInterval = setInterval(() => {
+        if (step >= steps || !driverLocationMarker) {
+            clearInterval(driverMoveInterval);
+            driverMoveInterval = null;
+            return;
+        }
+
+        // Move closer to target
+        const progress = step / steps;
+        const lat = currentLat + (targetLocation.lat - currentLat) * progress;
+        const lng = currentLng + (targetLocation.lng - currentLng) * progress;
+
+        driverLocationMarker.setLatLng([lat, lng]);
+        
+        // Update popup
+        const distanceLeft = haversineKm({lat, lng}, targetLocation);
+        driverLocationMarker.setPopupContent(`
+            <strong>🚗 ${driverName || "Driver"}</strong><br>
+            <small>${distanceLeft.toFixed(1)} km away from pickup</small>
+        `);
+
+        step++;
+
+        // Open popup on first step
+        if (step === 1) {
+            driverLocationMarker.openPopup();
+        }
+
+        // Update map view
+        map.panTo([lat, lng]);
+
+    }, 1500);
 }
 
 function updateRideStatus(text, color) {

@@ -4763,3 +4763,195 @@ button:hover{
     font-size: 15px;
     border: 1px solid rgba(128, 0, 32, 0.35) !important;
 }
+
+/* Active ride fare display */
+.psg-fare-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--psg-bg);
+    border: 1px solid var(--psg-border);
+    border-radius: var(--psg-radius-sm);
+    padding: 10px 14px;
+    margin: 8px 0 12px;
+}
+
+.psg-fare-display span {
+    font-size: 12px;
+    color: var(--psg-text-faint);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.psg-fare-display strong {
+    font-size: 18px;
+    color: var(--psg-gold);
+}
+
+/* ==========================================
+   PASSENGER ACTIVE RIDE - DRIVER INFO
+========================================== */
+
+/* Driver info row */
+.psg-driver-info {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: var(--psg-bg);
+    border: 1px solid var(--psg-border);
+    border-radius: var(--psg-radius-sm);
+}
+
+.psg-driver-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.psg-driver-avatar-small {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    background: rgba(128, 0, 32, 0.2);
+    color: #d8b4a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    border: 1px solid rgba(128, 0, 32, 0.3);
+}
+
+.psg-driver-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.psg-driver-details strong {
+    font-size: 14px;
+    color: var(--psg-text);
+}
+
+.psg-driver-details small {
+    font-size: 12px;
+    color: var(--psg-text-dim);
+}
+
+.psg-driver-status {
+    font-size: 12px;
+    color: #22c55e;
+    font-weight: 600;
+    padding: 4px 10px;
+    background: rgba(34, 197, 94, 0.12);
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+/* Status messages */
+.psg-status-message {
+    font-size: 13px;
+    color: var(--psg-amber);
+    margin: 4px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.psg-status-message.accepted {
+    color: #22c55e;
+}
+
+/* Route rows in active card */
+.psg-route-row {
+    display: flex;
+    gap: 12px;
+    padding: 6px 0;
+    align-items: flex-start;
+}
+
+.psg-route-row strong {
+    font-size: 12px;
+    color: var(--psg-text-dim);
+    display: block;
+}
+
+.psg-route-row p {
+    font-size: 13px;
+    color: var(--psg-text);
+    margin: 2px 0 0;
+}
+
+.psg-route-dot {
+    width: 10px;
+    height: 10px;
+    min-width: 10px;
+    border-radius: 50%;
+    margin-top: 3px;
+}
+
+.psg-route-dot.pickup-dot {
+    background: #800020;
+    box-shadow: 0 0 0 3px rgba(128, 0, 32, 0.2);
+}
+
+.psg-route-dot.dropoff-dot {
+    background: #d8b4a0;
+    box-shadow: 0 0 0 3px rgba(216, 180, 160, 0.2);
+}
+
+/* Waiting animation */
+.psg-waiting {
+    color: var(--psg-amber);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    animation: psg-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes psg-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ==========================================
+   DRIVER CAR MARKER ON MAP
+========================================== */
+
+.psg-driver-car-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 2px 8px rgba(128, 0, 32, 0.3));
+    animation: psg-driver-bounce 2s ease-in-out infinite;
+}
+
+@keyframes psg-driver-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+.psg-driver-car-icon .car-dot {
+    width: 18px;
+    height: 18px;
+    background: #800020;
+    border-radius: 50%;
+    border: 3px solid #d8b4a0;
+    box-shadow: 0 0 0 5px rgba(128, 0, 32, 0.2);
+    position: relative;
+}
+
+.psg-driver-car-icon .car-dot::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid #800020;
+}
