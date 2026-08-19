@@ -9,52 +9,144 @@ if (role !== "passenger") {
     window.location.href = "/driver.html";
 }
 
-const pickupSearch =
-    document.getElementById("pickup-search");
 
-const dropoffSearch =
-    document.getElementById("dropoff-search");
+// ==========================================
+// DOM ELEMENTS
+// ==========================================
 
-const searchResults =
-    document.getElementById("search-results");
+const sheetTitleEl = document.getElementById("sheet-title");
+const sheetBodyEl = document.getElementById("sheet-body");
 
-const activeRide =
-    document.getElementById("active-ride");
-
-// Ride history now lives on its own page (history.js
-// handles it) — this file only deals with the active ride.
-
-// Profile block
 const profileAvatar = document.getElementById("profile-avatar");
 const profileName = document.getElementById("profile-name");
 const profileEmail = document.getElementById("profile-email");
 
-// Price details
+const rideStatusBadge = document.getElementById("ride-status-badge");
+const rideStatusText = document.getElementById("ride-status-text");
+
+const historySummary = document.getElementById("history-summary");
+
+const openHistoryBtn = document.getElementById("open-history-btn");
+const closeHistoryBtn = document.getElementById("close-history-btn");
+const historyOverlay = document.getElementById("history-overlay");
+const historyPanelSubtitle = document.getElementById("history-panel-subtitle");
+const historyListEl = document.getElementById("history-list");
+
+const toastEl = document.getElementById("psg-toast");
+
+const pickupSearch = document.getElementById("pickup-search");
+const dropoffSearch = document.getElementById("dropoff-search");
+const searchResults = document.getElementById("search-results");
+const activeRide = document.getElementById("active-ride");
+
 const priceDetails = document.getElementById("price-details");
 const priceAmount = document.getElementById("price-amount");
+
+const requestBtn = document.getElementById("request-btn");
+const resetBtn = document.getElementById("reset-btn");
+
+
+// ==========================================
+// TOAST
+// ==========================================
+
+let toastTimer = null;
+
+function showToast(message) {
+    toastEl.textContent = message;
+    toastEl.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        toastEl.hidden = true;
+    }, 2600);
+}
+
+
+// ==========================================
+// FARE CONSTANTS
+// ==========================================
+
+const FARE_BASE = 15;
+const FARE_PER_KM = 8.5;
+
+function haversineKm(a, b) {
+    if (!a || !b) return 0;
+    const toRad = deg => (deg * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(b.lat - a.lat);
+    const dLng = toRad(b.lng - a.lng);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
+    const h = Math.sin(dLat / 2) ** 2 +
+              Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.asin(Math.sqrt(h));
+}
+
+function formatRand(amount) {
+    return `R${amount.toFixed(2)}`;
+}
+
+
+// ==========================================
+// PROFILE
+// ==========================================
+
+async function loadProfile() {
+    try {
+        const response = await fetch("/api/me", {
+            headers: { "Authorization": token }
+        });
+        if (!response.ok) throw new Error("Could not load profile");
+        const user = await response.json();
+        const name = user.name || "Passenger";
+        profileName.textContent = name;
+        profileEmail.textContent = user.email || "";
+        profileAvatar.textContent = name.charAt(0).toUpperCase();
+    } catch (error) {
+        console.error("Profile load error:", error);
+        profileName.textContent = "Passenger";
+        profileAvatar.textContent = "P";
+    }
+}
+
+loadProfile();
 
 
 // ==========================================
 // MAP
 // ==========================================
 
-const map = L.map("map", {zoomControl: true}).setView(
-    [-33.9601, 25.6022],
-    13
-);
+const map = L.map("map", { zoomControl: true }).setView([-33.9601, 25.6022], 13);
 
-L.tileLayer(
-    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-        maxZoom: 19,
-        attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }
-).addTo(map);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+}).addTo(map);
 
-setTimeout(() => {
-    map.invalidateSize();
-}, 300);
+setTimeout(() => map.invalidateSize(), 300);
+
+
+// ==========================================
+// MARKER ICONS
+// ==========================================
+
+const greenIcon = L.icon({
+    iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+const redIcon = L.icon({
+    iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
 
 
 // ==========================================
@@ -63,110 +155,12 @@ setTimeout(() => {
 
 let selectedPickup = null;
 let selectedDropoff = null;
-
 let pickupMarker = null;
 let dropoffMarker = null;
 let clickState = "pickup";
-
 let currentRoute = null;
-
 let pickupAddress = "";
 let dropoffAddress = "";
-
-
-// ==========================================
-// DOM ELEMENTS
-// ==========================================
-
-const requestBtn =
-    document.getElementById("request-btn");
-
-const resetBtn =
-    document.getElementById("reset-btn");
-
-
-
-// ==========================================
-// MARKER ICONS
-// ==========================================
-
-const greenIcon = L.icon({
-
-    iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
-
-    shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-
-    iconSize: [25, 41],
-
-    iconAnchor: [12, 41],
-
-    popupAnchor: [1, -34],
-
-    shadowSize: [41, 41]
-
-});
-
-
-const redIcon = L.icon({
-
-    iconUrl:
-        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-
-    shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-
-    iconSize: [25, 41],
-
-    iconAnchor: [12, 41],
-
-    popupAnchor: [1, -34],
-
-    shadowSize: [41, 41]
-
-});
-
-
-// ==========================================
-// PROFILE
-// ==========================================
-
-async function loadProfile() {
-
-    try {
-
-        const response = await fetch("/api/me", {
-            headers: {
-                "Authorization": token
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error("Could not load profile");
-        }
-
-        const user = await response.json();
-
-        const name = user.name || "Passenger";
-
-        profileName.textContent = name;
-        profileEmail.textContent = user.email || "";
-        profileAvatar.textContent = name.charAt(0).toUpperCase();
-
-    } catch (error) {
-
-        console.error("Profile load error:", error);
-
-        // Fallback if /api/me isn't available yet
-        profileName.textContent = "Passenger";
-        profileAvatar.textContent = "P";
-
-    }
-
-}
-
-loadProfile();
 
 
 // ==========================================
@@ -174,185 +168,15 @@ loadProfile();
 // ==========================================
 
 pickupSearch.addEventListener("focus", () => {
-
     clickState = "pickup";
-
     pickupSearch.classList.add("active-location");
     dropoffSearch.classList.remove("active-location");
-
 });
-
 
 dropoffSearch.addEventListener("focus", () => {
-
     clickState = "dropoff";
-
     dropoffSearch.classList.add("active-location");
     pickupSearch.classList.remove("active-location");
-
-});
-
-
-// ==========================================
-// MAP CLICK
-// ==========================================
-
-map.on("click", async function (e) {
-
-    const lat = e.latlng.lat;
-    const lng = e.latlng.lng;
-
-
-    // ======================================
-    // PICKUP
-    // ======================================
-
-    if (clickState === "pickup") {
-
-        // Remove old pickup marker
-        if (pickupMarker) {
-
-            map.removeLayer(pickupMarker);
-
-        }
-
-
-        // Get address from coordinates
-        pickupAddress = await getAddress(lat, lng);
-
-
-        // Save pickup coordinates + address together
-        // (rideData below relies on selectedPickup.address existing)
-        selectedPickup = {
-            lat: lat,
-            lng: lng,
-            address: pickupAddress
-        };
-
-
-        // Create pickup marker
-        pickupMarker = L.marker(
-            [lat, lng],
-            {
-                icon: greenIcon
-            }
-        )
-        .addTo(map)
-        .bindPopup("Pickup")
-        .openPopup();
-
-
-        // Put address into pickup search box
-        pickupSearch.value = pickupAddress;
-
-
-        // Automatically switch to drop-off
-        clickState = "dropoff";
-
-
-        pickupSearch.classList.remove(
-            "active-location"
-        );
-
-        dropoffSearch.classList.add(
-            "active-location"
-        );
-
-
-        console.log(
-            "Pickup selected:",
-            selectedPickup
-        );
-
-
-        return;
-    }
-
-
-    // ======================================
-    // DROP-OFF
-    // ======================================
-
-    if (clickState === "dropoff") {
-
-        // Remove old dropoff marker
-        if (dropoffMarker) {
-
-            map.removeLayer(dropoffMarker);
-
-        }
-
-
-        // Get address
-        dropoffAddress = await getAddress(
-            lat,
-            lng
-        );
-
-
-        // Save dropoff coordinates + address together
-        selectedDropoff = {
-            lat: lat,
-            lng: lng,
-            address: dropoffAddress
-        };
-
-
-        // Create dropoff marker
-        dropoffMarker = L.marker(
-            [lat, lng],
-            {
-                icon: redIcon
-            }
-        )
-        .addTo(map)
-        .bindPopup("Drop-off")
-        .openPopup();
-
-
-        // Put address into dropoff search box
-        dropoffSearch.value = dropoffAddress;
-
-
-        // Finished selecting
-        clickState = "done";
-
-
-        pickupSearch.classList.remove(
-            "active-location"
-        );
-
-        dropoffSearch.classList.remove(
-            "active-location"
-        );
-
-
-        console.log(
-            "Drop-off selected:",
-            selectedDropoff
-        );
-
-
-        checkRideReady();
-
-
-        // Draw route if your showRoute()
-        // function exists
-        if (
-            typeof showRoute === "function" &&
-            selectedPickup &&
-            selectedDropoff
-        ) {
-
-            showRoute(
-                selectedPickup,
-                selectedDropoff
-            );
-
-        }
-
-    }
-
 });
 
 
@@ -360,81 +184,196 @@ map.on("click", async function (e) {
 // REVERSE GEOCODING
 // ==========================================
 
-// Nominatim's usage policy allows roughly 1 request/sec.
-// Typing quickly or clicking pickup+dropoff back-to-back
-// can blow past that and get requests rejected, which is
-// what was showing raw coordinates instead of an address.
-// This forces a minimum gap between calls to Nominatim.
-
 let lastNominatimCall = 0;
 
 async function throttleNominatim() {
-
     const now = Date.now();
     const wait = Math.max(0, 1100 - (now - lastNominatimCall));
-
-    if (wait > 0) {
-        await new Promise(resolve => setTimeout(resolve, wait));
-    }
-
+    if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
     lastNominatimCall = Date.now();
-
 }
 
 async function getAddress(lat, lng, attempt = 1) {
-
     try {
-
         await throttleNominatim();
-
         const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-            {
-                headers: {
-                    "Accept": "application/json"
-                }
-            }
+            { headers: { "Accept": "application/json" } }
         );
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Could not find address"
-            );
-
-        }
-
+        if (!response.ok) throw new Error("Could not find address");
         const data = await response.json();
-
-        if (data.display_name) {
-
-            return data.display_name;
-
-        }
-
+        if (data.display_name) return data.display_name;
         throw new Error("No display_name in response");
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Reverse geocoding error:",
-            error
-        );
-
-        // One retry before giving up — most failures here
-        // are transient rate-limit rejections, not a truly
-        // missing address.
-        if (attempt < 2) {
-            return getAddress(lat, lng, attempt + 1);
-        }
-
-        // Last-resort fallback if address lookup keeps failing
+    } catch (error) {
+        console.error("Reverse geocoding error:", error);
+        if (attempt < 2) return getAddress(lat, lng, attempt + 1);
         return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    }
+}
 
+
+// ==========================================
+// MAP CLICK
+// ==========================================
+
+map.on("click", async function (e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    if (clickState === "pickup") {
+        if (pickupMarker) map.removeLayer(pickupMarker);
+        pickupAddress = await getAddress(lat, lng);
+        selectedPickup = { lat, lng, address: pickupAddress };
+        pickupMarker = L.marker([lat, lng], { icon: greenIcon })
+            .addTo(map)
+            .bindPopup("Pickup")
+            .openPopup();
+        pickupSearch.value = pickupAddress;
+        clickState = "dropoff";
+        pickupSearch.classList.remove("active-location");
+        dropoffSearch.classList.add("active-location");
+        return;
     }
 
+    if (clickState === "dropoff") {
+        if (dropoffMarker) map.removeLayer(dropoffMarker);
+        dropoffAddress = await getAddress(lat, lng);
+        selectedDropoff = { lat, lng, address: dropoffAddress };
+        dropoffMarker = L.marker([lat, lng], { icon: redIcon })
+            .addTo(map)
+            .bindPopup("Drop-off")
+            .openPopup();
+        dropoffSearch.value = dropoffAddress;
+        clickState = "done";
+        pickupSearch.classList.remove("active-location");
+        dropoffSearch.classList.remove("active-location");
+        checkRideReady();
+        if (selectedPickup && selectedDropoff) {
+            showRoute(selectedPickup, selectedDropoff);
+        }
+    }
+});
+
+
+// ==========================================
+// DRAW ROUTE + ESTIMATE FARE
+// ==========================================
+
+async function showRoute(pickup, dropoff) {
+    try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${pickup.lng},${pickup.lat};${dropoff.lng},${dropoff.lat}?overview=full&geometries=geojson`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.code !== "Ok") {
+            console.error("Could not find a route.");
+            return;
+        }
+        const route = data.routes[0];
+        const routeCoordinates = route.geometry.coordinates.map(c => [c[1], c[0]]);
+        if (currentRoute) map.removeLayer(currentRoute);
+        currentRoute = L.polyline(routeCoordinates, { weight: 6 }).addTo(map);
+        map.fitBounds(currentRoute.getBounds(), { padding: [30, 30] });
+        const distanceKm = route.distance / 1000;
+        const fare = FARE_BASE + distanceKm * FARE_PER_KM;
+        priceAmount.textContent = formatRand(fare);
+        priceDetails.classList.remove("hidden");
+    } catch (error) {
+        console.error("Routing error:", error);
+    }
+}
+
+
+// ==========================================
+// LOCATION SEARCH
+// ==========================================
+
+async function searchLocation(query) {
+    if (!query || query.length < 3) {
+        searchResults.innerHTML = "";
+        return;
+    }
+    try {
+        await throttleNominatim();
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=za`
+        );
+        const results = await response.json();
+        searchResults.innerHTML = "";
+        if (results.length === 0) {
+            searchResults.innerHTML = `<p class="psg-search-message">No locations found.</p>`;
+            return;
+        }
+        results.forEach(result => {
+            const item = document.createElement("div");
+            item.className = "psg-search-result";
+            item.textContent = result.display_name;
+            item.addEventListener("click", () => selectLocation(result));
+            searchResults.appendChild(item);
+        });
+    } catch (error) {
+        console.error("Location search error:", error);
+    }
+}
+
+function selectLocation(result) {
+    const location = {
+        lat: Number(result.lat),
+        lng: Number(result.lon),
+        address: result.display_name
+    };
+
+    if (clickState === "dropoff") {
+        selectedDropoff = location;
+        dropoffSearch.value = location.address;
+        if (dropoffMarker) map.removeLayer(dropoffMarker);
+        dropoffMarker = L.marker([location.lat, location.lng], { icon: redIcon })
+            .addTo(map)
+            .bindPopup("Drop-off")
+            .openPopup();
+    } else {
+        selectedPickup = location;
+        pickupSearch.value = location.address;
+        if (pickupMarker) map.removeLayer(pickupMarker);
+        pickupMarker = L.marker([location.lat, location.lng], { icon: greenIcon })
+            .addTo(map)
+            .bindPopup("Pickup")
+            .openPopup();
+    }
+
+    if (selectedPickup && selectedDropoff) {
+        showRoute(selectedPickup, selectedDropoff);
+    }
+
+    searchResults.innerHTML = "";
+    checkRideReady();
+}
+
+let pickupSearchTimer = null;
+let dropoffSearchTimer = null;
+
+pickupSearch.addEventListener("input", () => {
+    selectedPickup = null;
+    clearTimeout(pickupSearchTimer);
+    pickupSearchTimer = setTimeout(() => searchLocation(pickupSearch.value), 350);
+});
+
+dropoffSearch.addEventListener("input", () => {
+    selectedDropoff = null;
+    clearTimeout(dropoffSearchTimer);
+    dropoffSearchTimer = setTimeout(() => searchLocation(dropoffSearch.value), 350);
+});
+
+
+// ==========================================
+// CHECK RIDE READY
+// ==========================================
+
+function checkRideReady() {
+    if (selectedPickup && selectedDropoff) {
+        requestBtn.disabled = false;
+    } else {
+        requestBtn.disabled = true;
+    }
 }
 
 
@@ -443,849 +382,246 @@ async function getAddress(lat, lng, attempt = 1) {
 // ==========================================
 
 function resetMarkers() {
-
-    // Remove pickup marker
-    if (pickupMarker) {
-
-        map.removeLayer(pickupMarker);
-
-    }
-
-
-    // Remove dropoff marker
-    if (dropoffMarker) {
-
-        map.removeLayer(dropoffMarker);
-
-    }
-
-
-    // Remove route
-    if (currentRoute) {
-
-        map.removeLayer(currentRoute);
-
-        currentRoute = null;
-
-    }
-
-
-    // Reset variables
+    if (pickupMarker) map.removeLayer(pickupMarker);
+    if (dropoffMarker) map.removeLayer(dropoffMarker);
+    if (currentRoute) { map.removeLayer(currentRoute); currentRoute = null; }
     pickupMarker = null;
     dropoffMarker = null;
-
     selectedPickup = null;
     selectedDropoff = null;
-
     pickupAddress = "";
     dropoffAddress = "";
-
-
-    // Reset state
     clickState = "pickup";
-
-
-    // Clear search boxes
     pickupSearch.value = "";
     dropoffSearch.value = "";
-
-
-    // Remove active styling
-    pickupSearch.classList.remove(
-        "active-location"
-    );
-
-    dropoffSearch.classList.remove(
-        "active-location"
-    );
-
-
-    // Hide price details
+    pickupSearch.classList.remove("active-location");
+    dropoffSearch.classList.remove("active-location");
     priceDetails.classList.add("hidden");
     priceAmount.textContent = "--";
-
-
     checkRideReady();
-
-
-    console.log("Map reset");
-
 }
 
-
-resetBtn.addEventListener(
-    "click",
-    resetMarkers
-);
-
-
-// ==========================================
-// DRAW ACTUAL ROAD ROUTE + ESTIMATE FARE
-// ==========================================
-
-async function showRoute(pickup, dropoff) {
-
-    try {
-
-        const url =
-            `https://router.project-osrm.org/route/v1/driving/` +
-            `${pickup.lng},${pickup.lat};` +
-            `${dropoff.lng},${dropoff.lat}` +
-            `?overview=full&geometries=geojson`;
-
-        const response = await fetch(url);
-
-        const data = await response.json();
-
-        if (data.code !== "Ok") {
-
-            console.error(
-                "Could not find a route."
-            );
-
-            return;
-        }
-
-        const route =
-            data.routes[0];
-
-        const routeCoordinates =
-            route.geometry.coordinates.map(
-                coordinate => [
-                    coordinate[1],
-                    coordinate[0]
-                ]
-            );
-
-        if (currentRoute) {
-            map.removeLayer(currentRoute);
-        }
-
-        currentRoute = L.polyline(
-            routeCoordinates,
-            {
-                weight: 6
-            }
-        ).addTo(map);
-
-        map.fitBounds(
-            currentRoute.getBounds(),
-            {
-                padding: [30, 30]
-            }
-        );
-
-
-        // ------------------------------------------
-        // Estimated fare: R15 base + R8.50/km
-        // Adjust these rates to match your pricing.
-        // ------------------------------------------
-
-        const distanceKm = route.distance / 1000;
-        const fare = 15 + distanceKm * 8.5;
-
-        priceAmount.textContent = `R${fare.toFixed(2)}`;
-        priceDetails.classList.remove("hidden");
-
-
-    } catch (error) {
-
-        console.error(
-            "Routing error:",
-            error
-        );
-    }
-}
-
-
-
-// ==========================================
-// DISPLAY RIDE ON MAP
-// ==========================================
-
-function addRideToMap(ride) {
-
-    L.circleMarker(
-        [
-            ride.pickup.lat,
-            ride.pickup.lng
-        ],
-        {
-            radius: 8,
-            color: "#800020",
-            fillColor: "#800020",
-            fillOpacity: 0.8
-        }
-    )
-        .addTo(map)
-        .bindPopup(`
-            <strong>Pickup</strong><br>
-            ${ride.pickupAddress || "Address unavailable"}
-        `);
-
-
-    L.circleMarker(
-        [
-            ride.dropoff.lat,
-            ride.dropoff.lng
-        ],
-        {
-            radius: 8,
-            color: "#d8b7a5",
-            fillColor: "#d8b7a5",
-            fillOpacity: 0.9
-        }
-    )
-        .addTo(map)
-        .bindPopup(`
-            <strong>Drop-off</strong><br>
-            ${ride.dropoffAddress || "Address unavailable"}
-        `);
-
-
-    showRoute(
-        ride.pickup,
-        ride.dropoff
-    );
-}
+resetBtn.addEventListener("click", resetMarkers);
 
 
 // ==========================================
 // REQUEST RIDE
 // ==========================================
 
-requestBtn.addEventListener(
-    "click",
-    async function () {
-
-        if (
-            !selectedPickup ||
-            !selectedDropoff
-        ) {
-            return;
-        }
-
-
-        requestBtn.disabled = true;
-
-
-        try {
-
-            const rideData = {
-
-                pickup: {
-                    lat: selectedPickup.lat,
-                    lng: selectedPickup.lng
-                },
-
-                pickupAddress:
-                    selectedPickup.address,
-
-                dropoff: {
-                    lat: selectedDropoff.lat,
-                    lng: selectedDropoff.lng
-                },
-
-                dropoffAddress:
-                    selectedDropoff.address
-
-            };
-
-
-            const response =
-                await fetch(
-                    "/api/rides",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json",
-
-                            "Authorization":
-                                token
-                        },
-
-                        body:
-                            JSON.stringify(
-                                rideData
-                            )
-                    }
-                );
-
-
-            const data =
-                await response.json();
-
-
-            if (!response.ok) {
-
-                alert(
-                    data.message ||
-                    "Could not request ride."
-                );
-
-                await loadActiveRide();
-
-                return;
-            }
-
-
-            resetMarkers();
-
-            selectedPickup = null;
-            selectedDropoff = null;
-
-            pickupSearch.value = "";
-            dropoffSearch.value = "";
-
-
-            await loadActiveRide();
-
-        } catch (error) {
-
-            console.error(
-                "Request ride error:",
-                error
-            );
-
-        }
-
-    }
-);
-
-
-// ==========================================
-// LOAD PASSENGER RIDES
-// ==========================================
-
-async function loadRides() {
+requestBtn.addEventListener("click", async function () {
+    if (!selectedPickup || !selectedDropoff) return;
+    requestBtn.disabled = true;
 
     try {
+        const rideData = {
+            pickup: { lat: selectedPickup.lat, lng: selectedPickup.lng },
+            pickupAddress: selectedPickup.address,
+            dropoff: { lat: selectedDropoff.lat, lng: selectedDropoff.lng },
+            dropoffAddress: selectedDropoff.address
+        };
 
-        const response = await fetch("/api/my-rides", {
+        const response = await fetch("/api/rides", {
+            method: "POST",
             headers: {
+                "Content-Type": "application/json",
                 "Authorization": token
-            }
+            },
+            body: JSON.stringify(rideData)
         });
+
+        const data = await response.json();
 
         if (!response.ok) {
-            throw new Error("Failed to load rides");
-        }
-
-        const rides = await response.json();
-
-        console.log("RIDES FROM SERVER:", rides);
-
-        // Clear section
-        activeRide.innerHTML = "";
-
-
-        // ------------------------------------------
-        // Only the active ride is handled on this
-        // page — completed/cancelled rides are shown
-        // on history.html instead.
-        // ------------------------------------------
-
-        const activeRides = rides.filter(
-            ride =>
-                ride.status === "pending" ||
-                ride.status === "accepted"
-        );
-
-
-        // ------------------------------------------
-        // ACTIVE RIDE
-        // ------------------------------------------
-
-        if (activeRides.length === 0) {
-
-            activeRide.innerHTML = `
-                <p class="no-rides">
-                    No active ride.
-                </p>
-            `;
-
-        } else {
-
-            // Only show the latest active ride
-            const ride = activeRides[0];
-
-            activeRide.innerHTML = `
-
-                <div class="active-ride-card">
-
-                    <span class="status ${ride.status}">
-                        ${ride.status}
-                    </span>
-
-                    <p>
-                        <strong>Pickup</strong><br>
-                        ${ride.pickupAddress || "Address unavailable"}
-                    </p>
-
-                    <p>
-                        <strong>Drop-off</strong><br>
-                        ${ride.dropoffAddress || "Address unavailable"}
-                    </p>
-
-                    ${
-                        ride.status === "pending"
-                        ? `
-                            <p class="ride-message">
-                                Waiting for a driver...
-                            </p>
-
-                            <button
-                                class="cancel-ride-btn"
-                                onclick="cancelRide('${ride._id}')">
-                                Cancel Ride
-                            </button>
-                        `
-                        : `
-                            <p class="ride-message">
-                                Your driver has accepted the ride.
-                            </p>
-                        `
-                    }
-
-                </div>
-
-            `;
-
-        }
-
-
-        // ------------------------------------------
-        // SHOW RIDES ON MAP
-        // Only plot active rides — plotting every
-        // completed/cancelled ride on every refresh
-        // clutters the map over time.
-        // ------------------------------------------
-
-        activeRides.forEach(ride => {
-
-            addRideToMap(ride);
-
-        });
-
-
-        // ------------------------------------------
-        // PREVENT NEW REQUEST IF ACTIVE RIDE EXISTS
-        // ------------------------------------------
-
-        if (activeRides.length > 0) {
-
-            requestBtn.disabled = true;
-
-            requestBtn.textContent =
-                "Active Ride in Progress";
-
-        } else {
-
-            requestBtn.disabled = false;
-
-            requestBtn.textContent =
-                "Request Ride";
-
-        }
-
-
-    } catch (err) {
-
-        console.error(
-            "Error loading rides:",
-            err
-        );
-
-    }
-
-}
-
-// ==========================================
-// LOAD RIDES ON PAGE OPEN
-// ==========================================
-
-loadRides();
-
-
-// ==========================================
-// LOGOUT
-// ==========================================
-
-document.getElementById("index-logout-btn").addEventListener("click", () => {
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-
-    window.location.href = "/login.html";
-});
-
-async function searchLocation(query) {
-
-    if (!query || query.length < 3) {
-        searchResults.innerHTML = "";
-        return;
-    }
-
-    try {
-
-        await throttleNominatim();
-
-        const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&` +
-            `q=${encodeURIComponent(query)}&` +
-            `limit=5&countrycodes=za`
-        );
-
-        const results = await response.json();
-
-        searchResults.innerHTML = "";
-
-        if (results.length === 0) {
-
-            searchResults.innerHTML = `
-                <p class="search-message">
-                    No locations found.
-                </p>
-            `;
-
+            alert(data.message || "Could not request ride.");
+            await loadActiveRide();
             return;
         }
 
-        results.forEach(result => {
-
-            const item =
-                document.createElement("div");
-
-            item.className = "search-result";
-
-            item.textContent =
-                result.display_name;
-
-            item.addEventListener(
-                "click",
-                () => selectLocation(result)
-            );
-
-            searchResults.appendChild(item);
-
-        });
+        resetMarkers();
+        selectedPickup = null;
+        selectedDropoff = null;
+        pickupSearch.value = "";
+        dropoffSearch.value = "";
+        await loadActiveRide();
 
     } catch (error) {
-
-        console.error(
-            "Location search error:",
-            error
-        );
-
-    }
-
-}
-
-function selectLocation(result) {
-
-    const location = {
-
-        lat: Number(result.lat),
-
-        lng: Number(result.lon),
-
-        address: result.display_name
-
-    };
-
-
-    // Respect whichever box the user is actually
-    // typing into, instead of always filling
-    // pickup first.
-
-    if (clickState === "dropoff") {
-
-        selectedDropoff = location;
-
-        dropoffSearch.value =
-            location.address;
-
-        if (dropoffMarker) {
-            map.removeLayer(dropoffMarker);
-        }
-
-        dropoffMarker =
-            L.marker(
-                [location.lat, location.lng],
-                { icon: redIcon }
-            )
-            .addTo(map)
-            .bindPopup("Drop-off")
-            .openPopup();
-
-    } else {
-
-        selectedPickup = location;
-
-        pickupSearch.value =
-            location.address;
-
-        if (pickupMarker) {
-            map.removeLayer(pickupMarker);
-        }
-
-        pickupMarker =
-            L.marker(
-                [location.lat, location.lng],
-                { icon: greenIcon }
-            )
-            .addTo(map)
-            .bindPopup("Pickup")
-            .openPopup();
-
-    }
-
-    if (selectedPickup && selectedDropoff) {
-
-        showRoute(
-            selectedPickup,
-            selectedDropoff
-        );
-
-    }
-
-    searchResults.innerHTML = "";
-
-    checkRideReady();
-
-}
-
-// Typing fires an 'input' event per keystroke — searching
-// Nominatim on every single one is what was triggering the
-// rate-limit fallback to raw coordinates. Debounce so it
-// only searches ~350ms after the user stops typing.
-
-let pickupSearchTimer = null;
-let dropoffSearchTimer = null;
-
-pickupSearch.addEventListener(
-    "input",
-    () => {
-
-        selectedPickup = null;
-
-        clearTimeout(pickupSearchTimer);
-
-        pickupSearchTimer = setTimeout(() => {
-            searchLocation(pickupSearch.value);
-        }, 350);
-
-    }
-);
-dropoffSearch.addEventListener(
-    "input",
-    () => {
-
-        selectedDropoff = null;
-
-        clearTimeout(dropoffSearchTimer);
-
-        dropoffSearchTimer = setTimeout(() => {
-            searchLocation(dropoffSearch.value);
-        }, 350);
-
-    }
-);
-
-function checkRideReady() {
-
-    if (
-        selectedPickup &&
-        selectedDropoff
-    ) {
-
+        console.error("Request ride error:", error);
+    } finally {
         requestBtn.disabled = false;
-
-    } else {
-
-        requestBtn.disabled = true;
-
     }
+});
 
-}
+
+// ==========================================
+// LOAD ACTIVE RIDE
+// ==========================================
 
 async function loadActiveRide() {
-
     try {
-
-        const response =
-            await fetch(
-                "/api/passenger-active-ride",
-                {
-                    headers: {
-                        "Authorization": token
-                    }
-                }
-            );
-
-        const ride =
-            await response.json();
-
+        const response = await fetch("/api/passenger-active-ride", {
+            headers: { "Authorization": token }
+        });
+        const ride = await response.json();
 
         if (!ride) {
-
-            activeRide.innerHTML = `
-                <p class="no-rides">
-                    No active ride.
-                </p>
-            `;
-
-            requestBtn.disabled =
-                !(selectedPickup && selectedDropoff);
-
+            activeRide.innerHTML = `<p class="psg-empty-state">No active ride.</p>`;
+            updateRideStatus("Idle", "#6d7d73");
+            requestBtn.disabled = !(selectedPickup && selectedDropoff);
             return;
         }
 
-
         requestBtn.disabled = true;
+        updateRideStatus(ride.status, ride.status === "accepted" ? "#22c55e" : "#f2b705");
 
+        let driverHTML = ride.driver ? `
+            <div class="psg-driver-info">
+                <strong>Driver</strong>
+                <p>${ride.driver.name}</p>
+                <small>${ride.driver.email || ""}</small>
+            </div>
+        ` : `<p class="psg-waiting">Waiting for a driver...</p>`;
+
+        let cancelBtn = ride.status === "pending" ? `
+            <button class="psg-cancel-btn" onclick="cancelRide('${ride._id}')">Cancel Ride</button>
+        ` : '';
 
         activeRide.innerHTML = `
-
-            <div class="active-ride-card">
-
-                <span class="status ${ride.status}">
-                    ${ride.status}
-                </span>
-
-                <div class="route-info">
-
+            <div class="psg-active-card">
+                <span class="psg-status-pill ${ride.status}">${ride.status}</span>
+                <div class="psg-route-info">
                     <strong>Pickup</strong>
-
-                    <p>
-                        ${ride.pickupAddress}
-                    </p>
-
+                    <p>${ride.pickupAddress || "Address unavailable"}</p>
                     <strong>Drop-off</strong>
-
-                    <p>
-                        ${ride.dropoffAddress}
-                    </p>
-
+                    <p>${ride.dropoffAddress || "Address unavailable"}</p>
                 </div>
-
-                ${
-                    ride.driver
-                    ? `
-                        <div class="driver-info">
-
-                            <strong>Driver</strong>
-
-                            <p>
-                                ${ride.driver.name}
-                            </p>
-
-                            <small>
-                                ${ride.driver.email || ""}
-                            </small>
-
-                        </div>
-                    `
-                    : `
-                        <p class="waiting">
-                            Waiting for a driver...
-                        </p>
-                    `
-                }
-
-                <button
-                    class="cancel-btn"
-                    onclick="cancelRide('${ride._id}')">
-
-                    Cancel Ride
-
-                </button>
-
+                ${driverHTML}
+                ${cancelBtn}
             </div>
         `;
 
     } catch (error) {
-
-        console.error(
-            "Error loading active ride:",
-            error
-        );
-
+        console.error("Error loading active ride:", error);
     }
-
 }
+
+function updateRideStatus(text, color) {
+    rideStatusText.textContent = text;
+    rideStatusBadge.style.color = color || "#6d7d73";
+}
+
 
 // ==========================================
 // CANCEL RIDE
 // ==========================================
 
 async function cancelRide(rideId) {
-
-    const confirmed = confirm(
-        "Are you sure you want to cancel this ride?"
-    );
-
-    if (!confirmed) {
-        return;
-    }
-
+    if (!confirm("Are you sure you want to cancel this ride?")) return;
     try {
-
-        const response = await fetch(
-            `/api/rides/${rideId}/cancel`,
-            {
-                method: "PATCH",
-
-                headers: {
-                    // Matches the header format used by every
-                    // other request in this file. The old code
-                    // sent "Bearer <token>" here only, which
-                    // would fail if the backend expects the
-                    // raw token like the rest of the app does.
-                    // Flip this back to `Bearer ${token}` if
-                    // your backend actually expects that format.
-                    "Authorization": token,
-
-                    "Content-Type":
-                        "application/json"
-                }
+        const response = await fetch(`/api/rides/${rideId}/cancel`, {
+            method: "PATCH",
+            headers: {
+                "Authorization": token,
+                "Content-Type": "application/json"
             }
-        );
-
+        });
         const data = await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.message ||
-                "Unable to cancel ride"
-            );
-
-        }
-
-        alert("Ride cancelled successfully.");
-
-        // Refresh passenger rides
-        loadRides();
-
+        if (!response.ok) throw new Error(data.message || "Unable to cancel ride");
+        showToast("Ride cancelled successfully.");
+        await loadActiveRide();
     } catch (error) {
-
-        console.error(
-            "Cancel ride error:",
-            error
-        );
-
-        alert(
-            error.message ||
-            "Failed to cancel ride."
-        );
+        console.error("Cancel ride error:", error);
+        alert(error.message || "Failed to cancel ride.");
     }
 }
 
+
+// ==========================================
+// RIDE HISTORY
+// ==========================================
+
+async function loadRideHistory() {
+    try {
+        const response = await fetch("/api/my-rides", {
+            headers: { "Authorization": token }
+        });
+        if (!response.ok) throw new Error("Failed to load ride history");
+        const rides = await response.json();
+        const history = rides.filter(ride => ride.status === "completed" || ride.status === "cancelled");
+
+        historyPanelSubtitle.textContent = `${history.length} trip${history.length === 1 ? "" : "s"}`;
+
+        if (history.length === 0) {
+            historyListEl.innerHTML = `<p class="psg-empty-state">No ride history yet.</p>`;
+            return;
+        }
+
+        history.sort((a, b) => {
+            const dateA = new Date(a.updatedAt || a.createdAt || 0);
+            const dateB = new Date(b.updatedAt || b.createdAt || 0);
+            return dateB - dateA;
+        });
+
+        let html = "";
+        history.forEach(ride => {
+            const { fare } = estimateFareFromRide(ride);
+            const ts = ride.updatedAt || ride.createdAt;
+            const timeLabel = ts ? new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+            html += `
+                <div class="psg-history-item">
+                    <div class="psg-history-item-avatar">${ride.passenger?.name?.charAt(0)?.toUpperCase() || "P"}</div>
+                    <div class="psg-history-item-info">
+                        <strong>${ride.pickupAddress?.split(",")[0] || "Pickup"} → ${ride.dropoffAddress?.split(",")[0] || "Drop-off"}</strong>
+                        <small>${timeLabel ? `${timeLabel} · ` : ""}${ride.status}</small>
+                    </div>
+                    <span class="psg-history-item-fare">${formatRand(fare)}</span>
+                </div>
+            `;
+        });
+
+        historyListEl.innerHTML = html;
+
+    } catch (error) {
+        console.error("Error loading ride history:", error);
+        historyListEl.innerHTML = `<p class="psg-empty-state">Couldn't load your ride history.</p>`;
+    }
+}
+
+function estimateFareFromRide(ride) {
+    const km = haversineKm(ride.pickup, ride.dropoff);
+    return { km, fare: FARE_BASE + km * FARE_PER_KM };
+}
+
+openHistoryBtn.addEventListener("click", () => {
+    historyOverlay.hidden = false;
+    loadRideHistory();
+});
+
+closeHistoryBtn.addEventListener("click", () => {
+    historyOverlay.hidden = true;
+});
+
+historyOverlay.addEventListener("click", (e) => {
+    if (e.target === historyOverlay) historyOverlay.hidden = true;
+});
+
+
+// ==========================================
+// INITIAL LOAD
+// ==========================================
+
+loadActiveRide();
+
 setInterval(() => {
-
     loadActiveRide();
-
 }, 5000);
+
+
+// ==========================================
+// LOGOUT
+// ==========================================
+
+document.getElementById("passenger-logout-btn").addEventListener("click", () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    window.location.href = "/login.html";
+});

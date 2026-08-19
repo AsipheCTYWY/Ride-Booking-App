@@ -4,224 +4,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>RideBook - Request a Ride</title>
-<link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
->
+    <title>RideBook - Passenger</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="passenger-body">
+<body class="psg-body">
 
-<div class="passenger-page">
+<div class="psg-app">
 
-    <div class="passenger-layout">
+    <!-- MAP -->
+    <div id="map" class="psg-map"></div>
 
-        <!-- =====================================
-             LEFT BOOKING PANEL
-        ====================================== -->
+    <!-- OFFLINE OVERLAY -->
+    <div class="psg-map-offline-overlay" id="map-offline-overlay">
+        <div class="psg-offline-icon">📡</div>
+        <strong>No connection</strong>
+        <span>Check your internet connection</span>
+    </div>
 
-        <aside class="booking-panel">
+    <!-- TOP BAR -->
+    <header class="psg-topbar">
 
-            <!-- HEADER -->
+        <div class="psg-profile">
+            <div class="psg-avatar" id="profile-avatar">?</div>
+            <div class="psg-profile-info">
+                <strong id="profile-name">Loading...</strong>
+                <small id="profile-email"></small>
+            </div>
+        </div>
 
-            <div class="brand-row">
+        <div class="psg-topbar-right">
 
-                <div>
-                    <h1>RideBook</h1>
-
-                    <p>Your journey, simplified.</p>
-                </div>
-
-                <button
-                    id="index-logout-btn"
-                    class="logout-btn">
-                    Logout
-                </button>
-
+            <div class="psg-ride-pill">
+                <strong id="ride-status-badge">●</strong>
+                <span id="ride-status-text">Idle</span>
             </div>
 
+            <button id="passenger-logout-btn" class="psg-icon-btn" title="Logout">⏻</button>
 
-            <!-- USER PROFILE -->
+        </div>
 
-            <div class="passenger-profile">
+    </header>
 
-                <div class="profile-avatar" id="profile-avatar">?</div>
+    <!-- LOCATION CHIP -->
+    <div class="psg-location-chip">
+        <span class="psg-location-dot"></span>
+        <span id="psg-location-label">Gqeberha, Eastern Cape</span>
+    </div>
 
-                <div class="profile-info">
-                    <strong id="profile-name">Loading...</strong>
-                    <small id="profile-email"></small>
-                </div>
+    <!-- ==========================================
+         BOTTOM SHEET (matches driver style)
+    ========================================== -->
 
+    <section class="psg-sheet">
+
+        <div class="psg-sheet-handle"></div>
+
+        <!-- SHEET HEADER -->
+        <div class="psg-sheet-header">
+            <div class="psg-sheet-title-row">
+                <h2 id="sheet-title">Plan your ride</h2>
             </div>
+            <div class="psg-rate-badge" id="rate-badge">R15.00 base + R8.50/km</div>
+        </div>
 
+        <!-- SHEET BODY -->
+        <div class="psg-sheet-body" id="sheet-body">
 
-            <!-- LOCATION -->
+            <!-- ==========================================
+                 BOOKING CARD (inside sheet)
+            ========================================== -->
 
-            <div class="location-label">
-
-                <span class="location-dot"></span>
-
-                Gqeberha, Eastern Cape
-
-            </div>
-
-
-            <!-- HERO -->
-
-            <h2 class="hero-title">
-                Go anywhere with RideBook
-            </h2>
-
-
-            <!-- =====================================
-                 BOOKING CARD
-            ====================================== -->
-
-            <div class="booking-card">
-
-                <h3>Plan your ride</h3>
-
+            <div class="psg-booking-card">
 
                 <!-- PICKUP -->
-
-                <div class="search-box">
-
-                    <span class="search-icon pickup-icon">
-                        ●
-                    </span>
-
+                <div class="psg-search-box">
+                    <span class="psg-search-icon pickup-icon">●</span>
                     <input
                         type="text"
                         id="pickup-search"
                         placeholder="Pickup location"
                         autocomplete="off"
                     >
-
                 </div>
 
-
-                <div class="search-divider"></div>
-
+                <div class="psg-search-divider"></div>
 
                 <!-- DROPOFF -->
-
-                <div class="search-box">
-
-                    <span class="search-icon dropoff-icon">
-                        ■
-                    </span>
-
+                <div class="psg-search-box">
+                    <span class="psg-search-icon dropoff-icon">■</span>
                     <input
                         type="text"
                         id="dropoff-search"
                         placeholder="Drop-off location"
                         autocomplete="off"
                     >
-
                 </div>
 
-
                 <!-- SEARCH RESULTS -->
-
                 <div id="search-results"></div>
 
-
                 <!-- PRICE DETAILS -->
-
-                <div id="price-details" class="price-details hidden">
+                <div id="price-details" class="psg-price-details hidden">
                     <span>Estimated Fare</span>
                     <strong id="price-amount">--</strong>
                 </div>
 
-
                 <!-- BUTTONS -->
-
-                <div class="action-row">
-
-                    <button
-                        id="request-btn"
-                        disabled>
+                <div class="psg-action-row">
+                    <button id="request-btn" class="psg-btn-primary" disabled>
                         Request Ride
                     </button>
-
-                    <button
-                        id="reset-btn"
-                        class="secondary-btn">
+                    <button id="reset-btn" class="psg-btn-secondary">
                         Reset
                     </button>
-
                 </div>
 
             </div>
 
-
-            <!-- =====================================
+            <!-- ==========================================
                  ACTIVE RIDE
-            ====================================== -->
+            ========================================== -->
 
-            <section class="passenger-section">
-
-                <h3>Active Ride</h3>
-
+            <div class="psg-active-section">
+                <h3 class="psg-section-title">Active Ride</h3>
                 <div id="active-ride">
-
-                    <p class="no-rides">
-                        No active ride.
-                    </p>
-
+                    <p class="psg-empty-state">No active ride.</p>
                 </div>
-
-            </section>
-
-
-            <!-- =====================================
-                 RIDE HISTORY LINK
-            ====================================== -->
-
-            <a href="history.html" class="secondary-btn view-history-btn">
-                View Ride History
-            </a>
-
-        </aside>
-
-
-        <!-- =====================================
-             MAP
-        ====================================== -->
-
-        <main class="map-panel">
-
-            <div class="map-heading">
-
-                <span>📍</span>
-
-                <span>Plan your route</span>
-
             </div>
 
-            <div id="map"></div>
+            <!-- ==========================================
+                 HISTORY LINK
+            ========================================== -->
 
-        </main>
+            <button class="psg-history-row" id="open-history-btn">
+                <span class="psg-history-icon">🕓</span>
+                <span class="psg-history-text">
+                    <strong>Ride history</strong>
+                    <small id="history-summary">View your completed trips</small>
+                </span>
+                <span class="psg-chevron">›</span>
+            </button>
+
+        </div>
+
+    </section>
+
+    <!-- ==========================================
+         HISTORY OVERLAY (matches driver)
+    ========================================== -->
+
+    <div class="psg-history-overlay" id="history-overlay" hidden>
+
+        <div class="psg-history-panel">
+
+            <div class="psg-history-panel-header">
+                <div>
+                    <h2>Ride history</h2>
+                    <p id="history-panel-subtitle">0 trips</p>
+                </div>
+                <button class="psg-close-btn" id="close-history-btn">✕</button>
+            </div>
+
+            <div class="psg-history-list" id="history-list">
+                <p class="psg-empty-state">Loading…</p>
+            </div>
+
+        </div>
 
     </div>
 
+    <!-- TOAST -->
+    <div class="psg-toast" id="psg-toast" hidden></div>
+
 </div>
 
-
 <!-- LEAFLET -->
-
 <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin="">
 </script>
 
-
 <!-- YOUR JAVASCRIPT -->
-
 <script src="app.js"></script>
 
 </body>
