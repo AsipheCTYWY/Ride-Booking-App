@@ -610,34 +610,42 @@ async function renderAvailableCard(ride) {
     const isNew = !seenRideIds.has(ride._id);
     seenRideIds.add(ride._id);
     return `
-        <div class="drv-trip-card" id="ride-${ride._id}">
-            <div class="drv-fare-row">
-                <span class="drv-fare">
-                    ${formatRand(fare)}
-                    ${isNew ? '<span class="drv-new-badge">NEW</span>' : ""}
-                </span>
-                <span class="drv-distance-badge">${km.toFixed(1)} km</span>
-            </div>
-            <p class="drv-fare-detail">
-                ${formatRand(FARE_BASE)} base · ${km.toFixed(1)} km &times; ${formatRand(FARE_PER_KM)}/km
-            </p>
-            ${passengerRow(ride)}
-            ${routeRows(ride)}
-            <div class="drv-trip-meta-row">
-                <span class="drv-trip-eta">
-                    ${awayKm !== null ? `${awayKm.toFixed(1)} km · ${awayMin} min away` : ""}
-                </span>
-                <div class="drv-trip-actions">
-                    <button class="drv-btn-decline" onclick="dismissRide('${ride._id}')">
-                        ✕
-                    </button>
-                    <button class="drv-btn-accept" onclick="updateRide('${ride._id}', 'accepted')">
-                        Accept
-                    </button>
-                </div>
+    <div class="drv-trip-card" id="ride-${ride._id}"
+        onmouseenter="previewRoute('${ride._id}')"
+        onmouseleave="clearRoutePreview()"
+        onclick="previewRoute('${ride._id}')">
+
+        <div class="drv-fare-row">
+            <span class="drv-fare">
+                ${formatRand(fare)}
+                ${isNew ? '<span class="drv-new-badge">NEW</span>' : ""}
+            </span>
+            <span class="drv-distance-badge">${km.toFixed(1)} km</span>
+        </div>
+
+        <p class="drv-fare-detail">
+            ${formatRand(FARE_BASE)} base · ${km.toFixed(1)} km &times; ${formatRand(FARE_PER_KM)}/km
+        </p>
+
+        ${passengerRow(ride)}
+        ${routeRows(ride)}
+
+        <div class="drv-trip-meta-row">
+            <span class="drv-trip-eta">
+                ${awayKm !== null ? `${awayKm.toFixed(1)} km · ${awayMin} min away` : ""}
+            </span>
+            <div class="drv-trip-actions">
+                <button class="drv-btn-decline" onclick="event.stopPropagation(); dismissRide('${ride._id}')">
+                    ✕
+                </button>
+                <button class="drv-btn-accept" onclick="event.stopPropagation(); updateRide('${ride._id}', 'accepted')">
+                    Accept
+                </button>
             </div>
         </div>
-    `;
+
+    </div>
+`;
 }
 
 async function renderCurrentTripCard(ride) {
@@ -712,6 +720,7 @@ async function renderCurrentTripCard(ride) {
 
 async function render() {
     clearTripMarkers();
+    clearRoutePreview(); 
     if (currentRide) {
         sheetTitleEl.textContent = "Current trip";
         availableCountEl.hidden = true;
@@ -963,7 +972,69 @@ drvDetailOverlay.addEventListener("click", (e) => {
     }
 });
 
+// ==========================================
+// ROUTE PREVIEW — shown on hover/click over an
+// available ride, before it's accepted
+// ==========================================
 
+let previewRouteLine = null;
+let previewRouteRideId = null;
+
+async function previewRoute(rideId) {
+
+    // Already showing this ride's route — nothing to do
+    if (previewRouteRideId === rideId) return;
+
+    const ride = availableRides.find(r => r._id === rideId);
+    if (!ride || !ride.pickup || !ride.dropoff) return;
+
+    previewRouteRideId = rideId;
+
+    try {
+
+        const url = `https://router.project-osrm.org/route/v1/driving/${ride.pickup.lng},${ride.pickup.lat};${ride.dropoff.lng},${ride.dropoff.lat}?overview=full&geometries=geojson`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Ride may have been accepted/dismissed while the
+        // request was in flight — bail if the hover moved on
+        if (previewRouteRideId !== rideId) return;
+
+        if (data.code !== "Ok") return;
+
+        const coords = data.routes[0].geometry.coordinates.map(
+            c => [c[1], c[0]]
+        );
+
+        clearRoutePreview(false);
+
+        previewRouteLine = L.polyline(coords, {
+            color: "#22c55e",
+            weight: 5,
+            opacity: 0.85
+        }).addTo(map);
+
+        previewRouteRideId = rideId;
+
+        map.fitBounds(previewRouteLine.getBounds(), { padding: [40, 40] });
+
+    } catch (err) {
+        console.error("Route preview error:", err);
+    }
+
+}
+
+function clearRoutePreview(resetView = true) {
+
+    if (previewRouteLine) {
+        map.removeLayer(previewRouteLine);
+        previewRouteLine = null;
+    }
+
+    previewRouteRideId = null;
+
+}
 // ==========================================
 // LOGOUT
 // ==========================================

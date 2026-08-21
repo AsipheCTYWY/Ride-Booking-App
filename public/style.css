@@ -2058,8 +2058,12 @@ button:hover{
     border-radius: var(--drv-radius-sm);
     padding: 14px;
     animation: drv-card-in .2s ease;
+    cursor: pointer;
+    transition: border-color .15s ease, transform .15s ease;
 }
-
+.drv-trip-card:hover {
+    border-color: rgba(34, 197, 94, 0.4);
+}
 @keyframes drv-card-in {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
