@@ -480,15 +480,8 @@ requestBtn.addEventListener("click", async function () {
 
     } catch (error) {
         console.error("Request ride error:", error);
-    } finally {
-        requestBtn.disabled = false;
-    }
+    } 
 });
-
-
-// ==========================================
-// LOAD ACTIVE RIDE
-// ==========================================
 
 // ==========================================
 // LOAD ACTIVE RIDE
@@ -570,7 +563,7 @@ async function loadActiveRide() {
                 // The backend doesn't store driver location, so we'll use the pickup location
                 // as a placeholder until the driver updates their location
                 if (ride.pickup) {
-                    showDriverOnMap(ride.pickup, ride.driver.name);
+                    showDriverOnMap(ride.pickup, ride.driver.name, ride.pickup);
                 }
             }
         } else if (ride.status === "pending") {
@@ -668,7 +661,7 @@ const driverCarIcon = L.divIcon({
     iconAnchor: [16, 16]
 });
 
-function showDriverOnMap(location, driverName) {
+function showDriverOnMap(location, driverName, ridePickup) {
     // Remove existing driver marker
     if (driverLocationMarker) {
         map.removeLayer(driverLocationMarker);
@@ -693,7 +686,7 @@ function showDriverOnMap(location, driverName) {
     // Zoom to show both driver and pickup/dropoff
     const bounds = L.latLngBounds([
         [location.lat, location.lng],
-        [selectedPickup?.lat || location.lat, selectedPickup?.lng || location.lng]
+        [ridePickup?.lat || location.lat, ridePickup?.lng || location.lng]
     ]);
     map.fitBounds(bounds, { padding: [50, 50] });
 }

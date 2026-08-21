@@ -359,6 +359,62 @@ function plotTrip(ride) {
         tripMarkers.push(marker);
     }
 }
+// ==========================================
+// TRIP ROUTE (pickup -> drop-off) — drawn once
+// the driver has arrived and started the trip
+// ==========================================
+
+let tripRouteLine = null;
+
+function clearTripRoute() {
+
+    if (tripRouteLine) {
+        map.removeLayer(tripRouteLine);
+        tripRouteLine = null;
+    }
+
+}
+
+async function drawRouteToDropoff(pickup, dropoff) {
+
+    try {
+
+        const url =
+            `https://router.project-osrm.org/route/v1/driving/` +
+            `${pickup.lng},${pickup.lat};` +
+            `${dropoff.lng},${dropoff.lat}` +
+            `?overview=full&geometries=geojson`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.code !== "Ok") {
+            console.error("Could not find a route to the drop-off.");
+            return;
+        }
+
+        const route = data.routes[0];
+
+        const routeCoordinates = route.geometry.coordinates.map(
+            coordinate => [coordinate[1], coordinate[0]]
+        );
+
+        clearTripRoute();
+
+        tripRouteLine = L.polyline(routeCoordinates, {
+            weight: 5,
+            color: "#f4c430" // matches --drv-gold, same as the drop-off marker
+        }).addTo(map);
+
+        map.fitBounds(tripRouteLine.getBounds(), { padding: [40, 40] });
+
+    } catch (error) {
+
+        console.error("Trip route error:", error);
+
+    }
+
+}
 
 // ==========================================
 // ROUTE: DRIVER → PICKUP (heading-to-pickup phase)
@@ -805,7 +861,11 @@ async function render() {
                 drawRouteToPickup(currentRide);
             }
 
-        } else {
+        }
+        if (tripPhase === "onTrip") {
+            drawRouteToDropoff(currentRide.pickup, currentRide.dropoff);
+        }
+        else {
             clearPickupRoute();
         }
 
