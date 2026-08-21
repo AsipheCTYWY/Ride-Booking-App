@@ -283,9 +283,21 @@ function onLocationUpdate(position) {
             driverLocationLabel.textContent = label;
         });
     }
-    if (currentRide && tripPhase === "onTrip") {
-        render();
+      if (currentRide && tripPhase === "heading") {
+
+    const movedFarFromRouteFetch =
+        !pickupRouteLastLoc ||
+        haversineKm(pickupRouteLastLoc, driverLocation) > 0.15;
+
+    if (movedFarFromRouteFetch) {
+        drawRouteToPickup(currentRide);
     }
+
+}
+
+if (currentRide && tripPhase === "onTrip") {
+    render();
+}
     if (!prev && isOnline) {
         loadAvailableRides();
     }
@@ -318,6 +330,9 @@ locateDriver();
 // ==========================================
 
 let tripMarkers = [];
+let pickupRouteLine = null;
+let pickupRouteRideId = null;
+let pickupRouteLastLoc = null;
 
 function clearTripMarkers() {
     tripMarkers.forEach(marker => map.removeLayer(marker));
@@ -345,6 +360,63 @@ function plotTrip(ride) {
     }
 }
 
+// ==========================================
+// ROUTE: DRIVER → PICKUP (heading-to-pickup phase)
+// ==========================================
+
+async function drawRouteToPickup(ride) {
+
+    if (!driverLocation || !ride?.pickup) return;
+
+    try {
+
+        const url = `https://router.project-osrm.org/route/v1/driving/${driverLocation.lng},${driverLocation.lat};${ride.pickup.lng},${ride.pickup.lat}?overview=full&geometries=geojson`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.code !== "Ok") return;
+
+        // Bail if things changed while this request was in flight
+        // (ride completed/cancelled, or driver started the trip)
+        if (!currentRide || currentRide._id !== ride._id || tripPhase !== "heading") return;
+
+        const coords = data.routes[0].geometry.coordinates.map(
+            c => [c[1], c[0]]
+        );
+
+        if (pickupRouteLine) {
+            map.removeLayer(pickupRouteLine);
+        }
+
+        pickupRouteLine = L.polyline(coords, {
+            color: "#22c55e",
+            weight: 5,
+            opacity: 0.85,
+            dashArray: "1, 8",
+            lineCap: "round"
+        }).addTo(map);
+
+        pickupRouteRideId = ride._id;
+        pickupRouteLastLoc = driverLocation;
+
+    } catch (err) {
+        console.error("Route-to-pickup error:", err);
+    }
+
+}
+
+function clearPickupRoute() {
+
+    if (pickupRouteLine) {
+        map.removeLayer(pickupRouteLine);
+        pickupRouteLine = null;
+    }
+
+    pickupRouteRideId = null;
+    pickupRouteLastLoc = null;
+
+}
 
 // ==========================================
 // LOCAL TRIP-PHASE STATE MACHINE
@@ -726,8 +798,23 @@ async function render() {
         availableCountEl.hidden = true;
         sheetBodyEl.innerHTML = await renderCurrentTripCard(currentRide);
         plotTrip(currentRide);
+        
+        if (tripPhase === "heading") {
+
+            if (pickupRouteRideId !== currentRide._id) {
+                drawRouteToPickup(currentRide);
+            }
+
+        } else {
+            clearPickupRoute();
+        }
+
         return;
+
     }
+
+    clearPickupRoute();
+    
     if (!isOnline) {
         sheetTitleEl.textContent = "Offline";
         availableCountEl.hidden = true;
@@ -743,6 +830,7 @@ async function render() {
             onlineToggle.checked = true;
             onlineToggle.dispatchEvent(new Event("change"));
         });
+        
         return;
     }
     sheetTitleEl.textContent = "Available trips";
